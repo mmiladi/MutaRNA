@@ -1,0 +1,10 @@
+seq 206 775 CDS fill_color=green,r0=1.01r,r1=1.01r+20p
+seq 0 205  5UTR fill_color=yellow,r0=1.01r,r1=1.01r+20p
+seq 776 1091  3UTR fill_color=yellow,r0=1.01r,r1=1.01r+20p
+
+seq 262 278 Intarna2 fill_color=lred,r0=1.03r,r1=1.03r+20p
+seq 1032 1057 Intarna2 fill_color=lred,r0=1.03r,r1=1.03r+20p
+seq 412 437 Intarna1 fill_color=dblue,r0=1.03r,r1=1.03r+20p
+seq 1010 1033 Intarna1 fill_color=dblue,r0=1.03r,r1=1.03r+20p
+seq 285 286 SN-81 fill_color=vdred,r0=1.03r,r1=1.03r+20p
+
