@@ -1,1 +1,1 @@
-chr - seq KRAS-A30C-W1200-diff 0 75 black
+chr - seq RNA_G3C-MUTANT-diff 0 19 black
