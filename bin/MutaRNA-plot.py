@@ -3,7 +3,7 @@
 import sys, os
 
 script_path = os.path.dirname(__file__)
-localdotplot_path = os.path.join(script_path, '../../mmfold/local_dotplot/')
+localdotplot_path = os.path.join(script_path, '../lib/local_dotplot/')
 print(localdotplot_path)
 sys.path.append(localdotplot_path)
 import local_dotplot_lib as ldp
@@ -124,12 +124,21 @@ def call_vienna_plfold(sequence, seq_name, do_localfold=False, local_W=200, loca
         os.remove(unp_file_name)
     if not do_localfold:
         local_W, local_L = len(sequence), len(sequence)
+    
+    import tempfile
+    tmpfile = tempfile.NamedTemporaryFile(delete=False)
+
+    # Open the file for writing.
+    with open(tmpfile.name, 'w') as f:
+        f.write('>{}\n{}\n'.format(seq_name, sequence)) 
+
     # RNAFOLD = 'RNAfold -p2 '
-    RNAPLFOLD = 'RNAplfold -W {} -L {} -u 1 '.format(local_W, local_L)  # -u 1 for unpaired probablitiy 
+    RNAPLFOLD = 'RNAplfold -W {} -L {} -u 1 < {}'.format(local_W, local_L, tmpfile.name)  # -u 1 for unpaired probablitiy 
     assert len(sequence.split()) == 1
     cmd = "cd {}; ".format(out_dir)
-    cmd += ('echo ">%s\\n%s\\n" | '%(seq_name, sequence))  
+    # cmd += ('echo ">%s\\n%s\\n" | '%(seq_name, sequence))  
     cmd += RNAPLFOLD 
+    # cmd += '; ls'
     print(cmd)
     p = Popen(cmd, stdin=PIPE, shell=True, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate()
@@ -426,25 +435,13 @@ def plot_unpaired_probs(up_file_pairs, plot_heatmap=False,rang=None, out_dir='./
         fig.savefig(os.path.join(out_dir, os.path.basename(up_file_wild).replace('WT','WTMUT')+'-{}.svg'.format(title_key)), bbox_inches='tight', #pad_inches=0.5,
                     )
 
-def plot_circos_seq_SNP(rec_wild, SNP_tag, local_fold=False, plotted_seq_lenght=None,dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],out_dir='./'):
+def plot_circos_seq_SNP(rec_wild, SNP_tag, rec_mut, local_fold=False, plotted_seq_lenght=None,dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],out_dir='./'):
     from Bio import SeqIO
 
     
-    ID = '_'.join(rec_wild.id.split('|')[:2])+'_'+SNP_tag#"".join(x for x in rec_wild.id if x not in ['|','<', '>'])
+    ID = '_'.join(rec_wild.id.split('|')[:2]) # +'_'+SNP_tag#"".join(x for x in rec_wild.id if x not in ['|','<', '>'])
     utr5_l, utr3_l = 0, 0 
     #     print "rec_wild: " , rec_wild
-    wild_seq = rec_wild.seq
-    # print wild_seq
-
-    matches =  re.match('(\D)(\d+)(\D)', SNP_tag)
-    if not matches:
-        raise RuntimeError("No matches founs for tag:".format(SNP_tag)) 
-    wild_char, loc, mut_char = matches.group(1), int(matches.group(2)), matches.group(3)
-    assert(wild_seq[loc-1].upper() == wild_char.upper())
-    mut_seq = wild_seq[:loc-1] + mut_char + wild_seq[loc:]
-    
-    #print mut_seq
-    rec_mut = SeqRecord(mut_seq, id=ID+'-MUTANT')
 
     dp_wild, unp_wild = call_vienna_plfold(rec_wild.seq, ID, local_fold, out_dir=out_dir)
     create_circos_annotation(len(rec_wild), utr5_l, utr3_l, annot_locs, annot_names)
@@ -452,7 +449,13 @@ def plot_circos_seq_SNP(rec_wild, SNP_tag, local_fold=False, plotted_seq_lenght=
     
 
     dp_mut, unp_mut = call_vienna_plfold(rec_mut.seq, rec_mut.id, local_fold, out_dir=out_dir)
-    create_circos_annotation(len(rec_mut), utr5_l, utr3_l, [int(SNP_tag[1:-1])]+annot_locs, [SNP_tag]+annot_names)
+
+    
+    if len(SNP_tag) > 0 :
+        annot_locs += [int(SNP_tag[1:-1])]
+        annot_names += [SNP_tag]
+
+    create_circos_annotation(len(rec_mut), utr5_l, utr3_l, annot_locs, annot_names)
     run_dot2circ(dp_mut, rec_mut.id+suffix, out_dir=out_dir)
     dp_diff = dp_mut.replace('.ps', '_diff.ps')
     dpabs, dpremove, dpintroduce = write_diff_dp(dp_wild, dp_mut, dp_diff)
@@ -462,22 +465,35 @@ def plot_circos_seq_SNP(rec_wild, SNP_tag, local_fold=False, plotted_seq_lenght=
     run_dot2circ(dpintroduce, rec_mut.id+suffix+'-introduced', out_dir=out_dir)
     
     if dotplot is True:
-        ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild), filename=ID+'-WILD', what='basepairs',inverse=True, out_dir=out_dir)#, gene_loc=[2,10])
-        ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_mut), filename=ID+'-MUTANT', what='basepairs',inverse=True, out_dir=out_dir)
+        ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild), filename=ID+'-WILD', title_suffix=ID+'-WILD', what='basepairs',inverse=True, out_dir=out_dir)#, gene_loc=[2,10])
+        ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_mut), filename=ID+'-MUTANT', title_suffix=ID+'-MUTANT', what='basepairs',inverse=True, out_dir=out_dir)
 
-        ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_diff), filename=ID+'-DIFF', what='basepairs',inverse=True, out_dir=out_dir)
-        ldp.plot_heat_maps(None, ldp.parse_dp_ps(dpremove), filename=ID+'-REMOVED', what='basepairs',inverse=True, out_dir=out_dir)
-        ldp.plot_heat_maps(None, ldp.parse_dp_ps(dpintroduce), filename=ID+'-INTRODUCED', what='basepairs',inverse=True, out_dir=out_dir)
+        ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_diff), filename=ID+'-DIFF',title_suffix=ID+'-DIFF', what='basepairs',inverse=True, out_dir=out_dir)
+        ldp.plot_heat_maps(None, ldp.parse_dp_ps(dpremove), filename=ID+'-REMOVED', title_suffix=ID+'-REMOVED', what='basepairs',inverse=True, out_dir=out_dir)
+        ldp.plot_heat_maps(None, ldp.parse_dp_ps(dpintroduce), filename=ID+'-INTRODUCED', title_suffix=ID+'-INTRODUCED', what='basepairs',inverse=True, out_dir=out_dir)
         
         fig = ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild)+ldp.parse_dp_ps(dp_mut).transpose(), filename=ID+'-WT-MUT', what='basepairs',
                    inverse=True, interactive=False, gene_loc=None,title_suffix=ID+'-'+SNP_tag, out_dir=out_dir)
         fig.text(x=0.72,y=0.3,s='WT')
-        fig.text(x=0.65,y=0.2,s=SNP_tag)
+        fig.text(x=0.65,y=0.2,s='MT')
     
     if ECGplot is True:
 #         plot_up_dict(u, None, title=ID, fig=myfig,tidy=True)
         plot_unpaired_probs([(unp_wild, unp_mut)], plot_heatmap=False, out_dir=out_dir)
         plot_unpaired_probs([(unp_wild, unp_mut)], plot_heatmap=True, out_dir=out_dir)
+
+def get_mutation_rec(wild_rec, SNP_tag):
+    wild_seq = wild_rec.seq
+    matches =  re.match('(\D)(\d+)(\D)', SNP_tag)
+    if not matches:
+        raise RuntimeError("No matches founs for tag:".format(SNP_tag)) 
+    wild_char, loc, mut_char = matches.group(1), int(matches.group(2)), matches.group(3)
+    assert(wild_seq[loc-1].upper() == wild_char.upper())
+    mut_seq = wild_seq[:loc-1] + mut_char + wild_seq[loc:]
+    
+    #print mut_seq
+    rec_mut = SeqRecord(mut_seq, id=wild_rec.id + '-MUTANT')
+    return rec_mut
 
 
 if __name__ == '__main__':
@@ -486,13 +502,33 @@ if __name__ == '__main__':
         '\nSample call: \"python MutaRNA-plot.py --sequence ACGGGCACU --SNP-tag G3C'
         )
     parser.add_argument('--sequence-wild', required=True, type=is_valid_sequence, help='Input sequence string wildtype')
-    parser.add_argument('--SNP-tag', required=True, type=str, help='SNP tag e.g. "C3G" for mutation at position 3 from C to G')
+    parser.add_argument('--sequence-mutant',type=is_valid_sequence, help='Input sequence string mutant')
+    parser.add_argument('--SNP-tag',  type=str, help='SNP tag e.g. "C3G" for mutation at position 3 from C to G')
     parser.add_argument('--out-dir', default="./", type=is_valid_directory, help='output directory')
+
 
 
 # Save to file in the current working directory
 
     args = parser.parse_args()
-        
-    plot_circos_seq_SNP(args.sequence_wild, args.SNP_tag, local_fold=True, out_dir=args.out_dir)
+    
+    rec_wild = args.sequence_wild
 
+    if args.sequence_mutant is None and args.SNP_tag is None:
+        raise RuntimeError("Exactly one of these options must be passed (--sequence-mutant, --SNP-tag) but none is provided.")
+    
+    if args.sequence_mutant is not None and args.SNP_tag is not None:
+        raise RuntimeError("Exactly one of these options must be passed (--sequence-mutant, --SNP-tag) but both are provided.")
+    
+    if args.sequence_mutant is None:
+        rec_mutant = get_mutation_rec(args.sequence_wild, args.SNP_tag)
+        SNP_tag = args.SNP_tag
+    else:
+        rec_mutant = args.sequence_mutant
+        rec_mutant.id = rec_wild.id + '-MUTANT'
+        SNP_tag = ""
+
+    if len(rec_mutant) != len(args.sequence_wild):
+        raise RuntimeError ("Wildtype and mutant sequences have unequal lengths. wild:{} != mutant:{}".format(len(rec_mutant), len(args.sequence_wild)))
+
+    plot_circos_seq_SNP(rec_wild, SNP_tag, rec_mut=rec_mutant, local_fold=True, out_dir=args.out_dir)
