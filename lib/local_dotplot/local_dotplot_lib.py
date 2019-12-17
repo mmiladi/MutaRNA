@@ -272,11 +272,11 @@ def plot_heat_maps_fig(fig, subplot_num, mfe_probs, bp_probs_whole, what='all', 
                    interactive=False, gene_loc=None, title_suffix='',vmin=1e-2,vmax=1.0, colormap='hot'):
 
     if what == 'basepairs' or what == 'all':
-        my_heatmap(bp_probs_whole, fig, fig.add_subplot(subplot_num + 1), 'bp-probs '+title_suffix
+        my_heatmap(bp_probs_whole, fig, fig.add_subplot(subplot_num + 1), title_suffix
                    , inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap)
 
     if what == 'mfe-probs' or what == 'all':
-        my_heatmap(mfe_probs, fig, fig.add_subplot(subplot_num + 3), 'struct-probs:'+title_suffix,
+        my_heatmap(mfe_probs, fig, fig.add_subplot(subplot_num + 3), 'mfe:'+title_suffix,
                    inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap)
     if what == 'all':
         my_heatmap(bp_probs_whole*mfe_probs, fig, fig.add_subplot(subplot_num + 2), 'bp*struct:'+title_suffix,
@@ -287,7 +287,8 @@ def plot_heat_maps_fig(fig, subplot_num, mfe_probs, bp_probs_whole, what='all', 
     #     fig.savefig(filename+'.png', dpi=800)
 
 def plot_heat_maps(mfe_probs, bp_probs_whole, filename='', what='all', inverse=False, 
-                   interactive=False, gene_loc=None, title_suffix='',vmin=1e-2,vmax=1.0, out_dir='./'):
+                   interactive=False, gene_loc=None, title_suffix='',vmin=1e-2,vmax=1.0, out_dir='./',
+                   upper_triangle_txt='',lower_triangle_txt='',colormap='hot'):
     if what == 'all':
         fig = plt.figure(figsize=(20, 5))
         subplot_num = 140
@@ -296,23 +297,28 @@ def plot_heat_maps(mfe_probs, bp_probs_whole, filename='', what='all', inverse=F
         subplot_num = 110
 
     if what == 'basepairs' or what == 'all':
-        my_heatmap(bp_probs_whole, fig, fig.add_subplot(subplot_num + 1), 'bp-probs'+title_suffix
-                   , inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,)
+        my_heatmap(bp_probs_whole, fig, fig.add_subplot(subplot_num + 1), title_suffix
+                   , inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap)
 
     if what == 'mfe-probs' or what == 'all':
-        my_heatmap(mfe_probs, fig, fig.add_subplot(subplot_num + 3), 'struct-probs:'+title_suffix,
-                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,)
+        my_heatmap(mfe_probs, fig, fig.add_subplot(subplot_num + 3), 'mfe-probs:'+title_suffix,
+                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap)
     if what == 'all':
         my_heatmap(bp_probs_whole*mfe_probs, fig, fig.add_subplot(subplot_num + 2), 'bp*struct:'+title_suffix,
-                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,)
+                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap)
         my_heatmap(np.sqrt(bp_probs_whole*mfe_probs), fig, fig.add_subplot(subplot_num + 4), 'sqrt(bp*struct):'+title_suffix,
-                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,)
+                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap)
 
 
+    fig.text(x=0.72,y=0.3,s=upper_triangle_txt, alpha=0.5)
+    fig.text(x=0.65,y=0.2,s=lower_triangle_txt, alpha=0.5)
+    
     #     fig.savefig(filename+'.png', dpi=800)
     # if inverse:
         # filename += '_inverse'
     #fig.savefig(filename+'.pdf', dpi=300)
+
+    
     fig.savefig(os.path.join(out_dir, filename+'-dotplot.svg'), dpi=300, format="svg")
     fig.savefig(os.path.join(out_dir, filename+'-dotplot.png'), dpi=600, format="png")
     return fig
