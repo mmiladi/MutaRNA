@@ -13,4 +13,6 @@ R -e 'install.packages("R4RNA", repos = NULL, destdir="'$my_R_LIB_PATH'")'
 
 # test run
 cd ..
-python bin/MutaRNA-plot.py --fasta-wildtype data/sample0.fa --SNP-tag G3C
+mkdir test-output
+python bin/MutaRNA-plot.py --fasta-wildtype data/sample0.fa --SNP-tag G3C --out-dir ./test-output
+# Two directories local and global must have been created with dosens of plot files under ./test-output
