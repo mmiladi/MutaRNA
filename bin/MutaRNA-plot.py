@@ -508,7 +508,9 @@ def get_mutation_rec(wild_rec, SNP_tag):
     if not matches:
         raise RuntimeError("No matches founs for tag:".format(SNP_tag)) 
     wild_char, loc, mut_char = matches.group(1), int(matches.group(2)), matches.group(3)
-    assert(wild_seq[loc-1].upper() == wild_char.upper())
+    if (wild_seq[loc-1].upper() != wild_char.upper()):
+        print("WARNING!: SNP {} wild char expected: {}, but found non-matching:{} on wildtype sequences".format(SNP_tag, wild_char, wild_seq[loc-1]))
+
     mut_seq = wild_seq[:loc-1] + mut_char + wild_seq[loc:]
     
     #print mut_seq
@@ -521,9 +523,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='MutaRNA-plot Predict and plot local and global base-pair probabilities if wildtype and mutant RNAs'\
         '\nSample call: \"python MutaRNA-plot.py --sequence ACGGGCACU --SNP-tag G3C\"'
         )
-    parser.add_argument('--sequence-wild', required=True, type=is_valid_sequence, help='Input sequence string wildtype')
-    parser.add_argument('--sequence-mutant',type=is_valid_sequence, help='Input sequence string mutant')
-    parser.add_argument('--SNP-tag',  type=str, help='SNP tag e.g. "C3G" for mutation at position 3 from C to G')
+    
+    parser.add_argument('--fasta-wildtype', required=True, type=is_valid_file, help='Input sequence wildtype in fasta format')
+    #parser.add_argument('--sequence-wild', required=True, type=is_valid_sequence, help='Input sequence string wildtype')
+    parser.add_argument('--sequence-mutant',type=is_valid_sequence, help='Input sequence string mutant (support disabled)')
+    parser.add_argument('--SNP-tag',  required=True, type=str, help='SNP tag e.g. "C3G" for mutation at position 3 from C to G')
     parser.add_argument('--out-dir', default="./", type=is_valid_directory, help='output directory')
     parser.add_argument('--no-global-fold', action='store_true', help='Do not run (semi-)global fold (semi: max-window 1000nt)')
     parser.add_argument('--no-local-fold', action='store_true', help='Do not run local fold')
@@ -537,8 +541,9 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     
-    rec_wild = args.sequence_wild
-
+    #rec_wild = args.sequence_wild
+    rec_wild = SeqIO.read(args.fasta_wildtype, 'fasta')
+    rec_wild.id = "RNA"
     if args.sequence_mutant is None and args.SNP_tag is None:
         raise RuntimeError("Exactly one of these options must be passed (--sequence-mutant, --SNP-tag) but none is provided.")
     
@@ -546,14 +551,14 @@ if __name__ == '__main__':
         raise RuntimeError("Exactly one of these options must be passed (--sequence-mutant, --SNP-tag) but both are provided.")
     
     if args.sequence_mutant is None:
-        rec_mutant = get_mutation_rec(args.sequence_wild, args.SNP_tag)
+        rec_mutant = get_mutation_rec(rec_wild, args.SNP_tag)
         SNP_tag = args.SNP_tag
     else:
         rec_mutant = args.sequence_mutant
         rec_mutant.id = rec_wild.id + '-MUTANT'
         SNP_tag = ""
 
-    if args.local_L > len(args.sequence_wild):
+    if args.local_L > len(rec_wild):
         print ("Note: global and local outputs would be the same, since sequence length is shorter than bp-interaction lengnth. ")
         #raise RuntimeError ("Wildtype and mutant sequences have unequal lengths. wild:{} != mutant:{}".format(len(rec_mutant), len(args.sequence_wild)))
 
