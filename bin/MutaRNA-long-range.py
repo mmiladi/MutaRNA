@@ -4,6 +4,8 @@ from subprocess import Popen, PIPE
 import re
 import argparse
 
+RCHIE_BIN = '/home/milad/1workspace/forked_repositories/r-chie/rchie.R'
+
 
 def is_valid_file(file_name):
     if os.path.isfile(file_name):
@@ -101,7 +103,7 @@ def csv_to_hlx(intarna_csv, len_target, shift_len_query, hlx_scale=1, hybrid_ene
 
 def plot_rchie(WT_hlx, MUT_hlx,  out_name, energy_large_low_mid_high, convert_png=False, convert_svg=False):
 
-    RCHIE_BIN = '/home/milad/1workspace/forked_repositories/r-chie/rchie.R'
+    
     # RCHIE_BIN =  '/home/milad/1workspace/MutaRNA/repos/r-chie/rchie.R'
 
     color_ranges = ['\-12.5,\-10,\-7.5,\-5,\-4',
@@ -201,6 +203,10 @@ def run_all_SNP(fasta_wt, SNP_tag, query_context_len=20, out_dir='./'):
     rec_wt = SeqIO.read(fasta_wt, "fasta")
     wild_seq = rec_wt.seq
     
+    if len(wild_seq) < 200:
+        print("NOTE!: Skipping long-range interaction predictions, sequence too short {} < 200".format(len(wild_seq)))
+        return
+
     if wild_seq[snp_loc-1] != wild_char:
         print("WARNING!: SNP {} wild char expected: {}, but found non-matching:{} on wildtype sequences".format(SNP_tag, wild_char, wild_seq[snp_loc-1]))
 
@@ -248,10 +254,14 @@ if __name__ == '__main__':
     parser.add_argument('--SNP-tag',  required=True, type=str, help='SNP tag e.g. "C3G" for mutation at position 3 from C to G')
     parser.add_argument('--out-dir', default="./", type=is_valid_directory, help='output directory')
     parser.add_argument('--mutation-context-query',  default=20, type=int, help='Compute interamolecular interactions of the full sequence with this (short) context length around the mutation location. ')
+    parser.add_argument('--rchie-bin-path', type=is_valid_file, help='Path to the rchie R script, e.g. ./r-chie/rchie.R')
 
 
     args = parser.parse_args()
-
+    if args.rchie_bin_path:
+        RCHIE_BIN = args.rchie_bin_path
+    
+    
     run_all_SNP(args.fasta_wildtype, args.SNP_tag, query_context_len=args.mutation_context_query, 
                 out_dir=args.out_dir)
     
