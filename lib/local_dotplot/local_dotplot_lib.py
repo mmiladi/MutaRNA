@@ -311,7 +311,7 @@ def plot_heat_maps(mfe_probs, bp_probs_whole, filename='', what='all', inverse=F
 
 
     fig.text(x=0.72,y=0.3,s=upper_triangle_txt, alpha=0.5)
-    fig.text(x=0.65,y=0.2,s=lower_triangle_txt, alpha=0.5)
+    fig.text(x=0.65,y=0.18,s=lower_triangle_txt, alpha=0.5)
     
     #     fig.savefig(filename+'.png', dpi=800)
     # if inverse:
