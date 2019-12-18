@@ -9,6 +9,7 @@ import local_dotplot_lib as ldp
 
 from matplotlib import pyplot as plt
 import seaborn as sns
+
 import numpy as np
 import argparse
 
@@ -25,6 +26,14 @@ from Bio.Alphabet import IUPAC
 from Bio import Alphabet
 from subprocess import Popen, PIPE
 from os.path import isfile
+
+def is_valid_SNP(SNP_tag):
+    SNP_tag = SNP_tag.strip()
+    matches =  re.match('^(\D)(\d+)(\D)$', SNP_tag)
+    
+    if not matches:
+        raise RuntimeError("Invalid SNP tag: \"{}\". A valid SNP tag example: G200C".format(SNP_tag))
+    return SNP_tag
 
 def is_valid_file(file_name):
     if os.path.isfile(file_name):
@@ -224,16 +233,7 @@ def plot_circos_seq_annotate(rec, annotate_indices, annotate_names, local_fold=F
 
 from cycler import cycler
 
-plt.rc('axes', prop_cycle=(cycler('color', ['k',(0.8901960784313725, 0.10196078431372549, 0.10980392156862745)]
-#                                   sns.color_palette()
-#                                   [sns.color_palette("Paired")[1], sns.color_palette("Paired")[-1]]
-                                  #                                   sns.color_palette("RdBu_r", 2)
-#                                   ['k', 'b', 'r', 'g']
-                                 ) 
-#                            +                            cycler('linestyle', ['-', '--', ':', '-.']) 
-                          ))
 
-   
 
 def get_unpaired_probs(unp_file):
     # Read Vienna RNAplfold unpaired prob file (-u 1) into dict
@@ -259,7 +259,7 @@ def get_unpaired_probs(unp_file):
     return up_dic
 
 
-def plot_up_dict(up_dic, plot_lims=None, title='XX', fig=None, diff=False,tidy=False, ticks_step=50):
+def plot_up_dict(up_dic, plot_lims=None, title='XX', fig=None, diff=False,tidy=False):
     if plot_lims is None:
         x, y = up_dic.keys(), up_dic.values()
     else:
@@ -270,27 +270,36 @@ def plot_up_dict(up_dic, plot_lims=None, title='XX', fig=None, diff=False,tidy=F
     ax = fig.add_subplot(111) 
     ax.plot(x, y, label=title, alpha=0.8)
     if not tidy:
-        ax.legend(loc='upper left')#, bbox_to_anchor=(0.0, 1.1))
+        ax.legend(loc='lower left', framealpha=0.2)#, bbox_to_anchor=(0.0, 1.1))
 
 
-    import numpy as np
+
+    if len(x) < 101:
+        ticks_label_step = 10
+        ticks_step = 10
+    else:
+        ticks_label_step = 50
+        ticks_step = 10
+
     minor_ticks = np.arange(min(x), max(x), 1)                                               
     major_ticks = np.arange(min(x)-min(x)%ticks_step, max(x), ticks_step)                                               
 
     ax.set_xticks(minor_ticks, minor=True)                                           
     ax.set_xticks(major_ticks) 
+                
+
     ax.set_xlabel('Position')
     if diff:
         ax.set_yticks([-1, 1], minor=True)                                           
         ax.set_ylim([-1.05,1.05])
-        ax.set_ylabel('Accessibility(WT) - Accessibility(MUT)')
+        #ax.set_ylabel('Accessibility(WT) - Accessibility(MUT)')
     else:
         ax.set_yticks([0,1], minor=True)                                           
         ax.set_ylim([-0.05,1.05])
-        ax.set_ylabel('Accessibility')
+    ax.set_ylabel('Accessibility')
 #     ax.grid(which='both')                                                            
 
-    # or if you want differnet settings for the grids:                               
+    # or if you want different settings for the grids:                               
     ax.grid(which='minor', alpha=0.5)
     ax.axhline(0)
 #     ax.axhline(0, linestyle='--', color='k', alpha=0.5) # horizontal lines
@@ -299,6 +308,15 @@ def plot_up_dict(up_dic, plot_lims=None, title='XX', fig=None, diff=False,tidy=F
     ax.set_xlim([min(x)-1, max(x)+1])
     if not tidy:
         ax.set_title(title)
+    
+    if ticks_label_step != ticks_step:
+        labels = [item.get_text() for item in ax.get_xticklabels()]
+        labels_locs = ax.get_xticks()
+        print("************")
+        print(labels, labels_locs)
+        pruned_labels = [str(loc)  if (loc%ticks_label_step)==0 else '' for loc, lab in zip(labels_locs, labels)]
+        ax.set_xticklabels(pruned_labels)
+
 
 
 def heatmap_up_dict(up_dic, plot_lims=None, title='XX', ax=None,fig=None, diff=False,
@@ -397,12 +415,30 @@ def heatmap_up_dict(up_dic, plot_lims=None, title='XX', ax=None,fig=None, diff=F
     ax.set_title(title,rotation=90,va='bottom')
 
 
-def plot_unpaired_probs(up_file_pairs, plot_heatmap=False,rang=None, out_dir='./'):
+def plot_unpaired_probs(up_file_pairs, plot_heatmap=False,rang=None, out_dir='./',ECGs_together=True, dynamic_width_ecg=True):
+    plt.rc('axes', #prop_cycle=(cycler('color', ['k',(0.8901960784313725, 0.10196078431372549, 0.10980392156862745)]
+            prop_cycle=(cycler('color', sns.color_palette('colorblind', 3))))
+            
+            #           sns.color_palette()
+            #           [sns.color_palette("Paired")[1], sns.color_palette("Paired")[-1]]
+            #           #                                   sns.color_palette("RdBu_r", 2)
+            #           ['k', 'b', 'r', 'g']
+            #          ) 
+            #    +                            cycler('linestyle', ['-', '--', ':', '-.']) 
+            #   ))
+
+   
     for up_file_wild, up_file_mut in up_file_pairs:
         # print (up_file_wild, up_file_mut)
         d_wild = get_unpaired_probs(up_file_wild)
         d_mut = get_unpaired_probs(up_file_mut)
         dict_diff = {f:(d_wild[f] - d_mut[f])  for f in d_wild}
+        seq_len = len(d_wild)
+        if dynamic_width_ecg:
+            fig_width = 5 + 2*int(seq_len/100)
+        else:
+            fig_width = 12
+
         if plot_heatmap:
             title_key = 'heatband'
             fig, ax = plt.subplots(1,figsize=(0.5, 11))
@@ -410,8 +446,11 @@ def plot_unpaired_probs(up_file_pairs, plot_heatmap=False,rang=None, out_dir='./
         else:
             title_key = 'ECG'
 
-            fig = plt.figure(figsize=(12, 2))
-            plot_up_dict(dict_diff, rang, title=os.path.basename(up_file_wild).replace('-WT-','-').replace('_lunp','-DIFF')
+            if ECGs_together:
+                fig = plt.figure(figsize=(fig_width, 3))
+            else:
+                fig = plt.figure(figsize=(fig_width, 2))
+            plot_up_dict(dict_diff, rang, title='Accessibility(wt) - Accessibility(mut)' #os.path.basename(up_file_wild).replace('-WT-','-').replace('_lunp','-DIFF')
                          , fig=fig, diff=True,tidy=True)
         fig.savefig(os.path.join(out_dir, os.path.basename(up_file_wild)+'-diff-{}.png'.format(title_key)), bbox_inches='tight', pad_inches=0.2
                    )
@@ -421,17 +460,19 @@ def plot_unpaired_probs(up_file_pairs, plot_heatmap=False,rang=None, out_dir='./
         if plot_heatmap:
             fig = plt.figure(figsize=(2.5, 11),tight_layout={'w_pad':2})
 
-        else:
-            fig = plt.figure(figsize=(12, 1))
-        labeldic = {0:True, 1:False}
-        for iup, up_file in enumerate([up_file_wild, up_file_mut]):
+        elif not ECGs_together:
+            fig = plt.figure(figsize=(fig_width, 1))
+        labeldic = {1:True, 0:False}
+        titledic = {0:'mut', 1:'wt'}
+        
+        for iup, up_file in enumerate([up_file_mut, up_file_wild]):
             if plot_heatmap:
                 ax = fig.add_subplot(131+iup*2) # Skip one ax in dirty way for cbar
                 heatmap_up_dict(get_unpaired_probs(up_file), rang, title=os.path.basename(up_file).replace('-MUT-','-').replace('-WT-','-').replace('_lunp',''), 
                                 fig=fig,ax=ax,ticklabel=labeldic[iup])            
             else:
-                plot_up_dict(get_unpaired_probs(up_file), rang, title=os.path.basename(up_file).replace('-MUT-','-').replace('-WT-','-').replace('_lunp',''), 
-                             fig=fig,tidy=True,
+                plot_up_dict(get_unpaired_probs(up_file), rang, title='Accessibility({})'.format(titledic[iup]),#os.path.basename(up_file).replace('-MUT-','-').replace('-WT-','-').replace('_lunp',''), 
+                             fig=fig,tidy=False,diff=ECGs_together
 #                              ax=ax, ticklabel=labeldic[iup]
                             )            
             
@@ -471,7 +512,12 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
 
         
         if len(SNP_tag) > 0 :
-            annot_locs += [int(SNP_tag[1:-1])]
+            matches =  re.match('(\D)(\d+)(\D)', SNP_tag)
+            if not matches:
+                raise RuntimeError("No matches founs for tag:".format(SNP_tag)) 
+            wild_char, loc, mut_char = matches.group(1), int(matches.group(2)), matches.group(3)
+
+            annot_locs += [loc]
             annot_names += [SNP_tag]
 
         create_circos_annotation(len(rec_mut), utr5_l, utr3_l, annot_locs, annot_names)
@@ -484,19 +530,21 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
         run_dot2circ(dpintroduce, rec_mut.id+suffix+'-introduced', out_dir=out_dir)
         
         if dotplot is True:
-            ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild), filename=ID+'-WILD', title_suffix=ID+'-WILD', what='basepairs',inverse=True, out_dir=out_dir)#, gene_loc=[2,10])
-            ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_mut), filename=ID+'-MUTANT', title_suffix=ID+'-MUTANT', what='basepairs',inverse=True, out_dir=out_dir)
+            ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild), filename=ID+'-WILD', title_suffix=ID+'\n'+r'$P({\rm wt})$', what='basepairs',inverse=True, out_dir=out_dir)#, gene_loc=[2,10])
+            ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_mut), filename=ID+'-MUTANT', title_suffix=ID+'\n'+r'$P({\rm mut})$''\n'+r'$P({\rm wt})$''-MUTANT', what='basepairs',inverse=True, out_dir=out_dir)
 
-            ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild)-ldp.parse_dp_ps(dp_mut), colormap='seismic',
-                                filename=ID+'-DIFF',title_suffix=ID+'-DIFF', what='basepairs',inverse=True, out_dir=out_dir)
-            ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_diff), filename=ID+'-ABSDIFF',title_suffix=ID+'-ABSDIFF', what='basepairs',inverse=True, out_dir=out_dir)
-            ldp.plot_heat_maps(None, ldp.parse_dp_ps(dpremove), filename=ID+'-REMOVED', title_suffix=ID+'-REMOVED', what='basepairs',inverse=True, out_dir=out_dir)
-            ldp.plot_heat_maps(None, ldp.parse_dp_ps(dpintroduce), filename=ID+'-INTRODUCED', title_suffix=ID+'-INTRODUCED', what='basepairs',inverse=True, out_dir=out_dir)
+            ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild)-ldp.parse_dp_ps(dp_mut), colormap='seismic', vmin=-1.0, vmax=1.0,
+                                filename=ID+'-DIFF',title_suffix=ID+'\n'+r'$\Delta = P({\rm wt})-P({\rm mut})$', what='basepairs',inverse=True, out_dir=out_dir)
+            #ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_diff), filename=ID+'-ABSDIFF',title_suffix=ID+'-ABSDIFF', what='basepairs',inverse=True, out_dir=out_dir)
+            #ldp.plot_heat_maps(None, ldp.parse_dp_ps(dpremove), filename=ID+'-REMOVED', title_suffix=ID+'-REMOVED', what='basepairs',inverse=True, out_dir=out_dir)
+            #ldp.plot_heat_maps(None, ldp.parse_dp_ps(dpintroduce), filename=ID+'-INTRODUCED', title_suffix=ID+'-INTRODUCED', what='basepairs',inverse=True, out_dir=out_dir)
             
-            fig = ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild)+ldp.parse_dp_ps(dp_mut).transpose(), filename=ID+'-WT-MUT', what='basepairs',
-                    inverse=True, interactive=False, gene_loc=None,title_suffix=ID+'-'+SNP_tag, out_dir=out_dir, upper_triangle_txt='WT',lower_triangle_txt='MUT')
+            ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild)+ldp.parse_dp_ps(dp_mut).transpose(), filename=ID+'-WT-MUT', what='basepairs',
+                    inverse=True, interactive=False, gene_loc=None,title_suffix=ID+'-'+SNP_tag, out_dir=out_dir, upper_triangle_txt='wt',lower_triangle_txt='mut')
             
-        
+            ldp.plot_heat_maps(None, ldp.parse_dp_ps(dpremove)+ldp.parse_dp_ps(dpintroduce).transpose(), filename=ID+'-REMOVED-INTRODUCED', what='basepairs',
+                    inverse=True, interactive=False, gene_loc=None,title_suffix=ID+'\n'+r'$|\Delta| = |P({\rm wt})-P({\rm mut})|$', out_dir=out_dir, upper_triangle_txt='weakened\n' + r'    $\Delta>0$',lower_triangle_txt='increased\n' + r'    $\Delta<0$')
+
         if ECGplot is True:
     #         plot_up_dict(u, None, title=ID, fig=myfig,tidy=True)
             plot_unpaired_probs([(unp_wild, unp_mut)], plot_heatmap=False, out_dir=out_dir)
@@ -527,7 +575,7 @@ if __name__ == '__main__':
     parser.add_argument('--fasta-wildtype', required=True, type=is_valid_file, help='Input sequence wildtype in fasta format')
     #parser.add_argument('--sequence-wild', required=True, type=is_valid_sequence, help='Input sequence string wildtype')
     parser.add_argument('--sequence-mutant',type=is_valid_sequence, help='Input sequence string mutant (support disabled)')
-    parser.add_argument('--SNP-tag',  required=True, type=str, help='SNP tag e.g. "C3G" for mutation at position 3 from C to G')
+    parser.add_argument('--SNP-tag',  required=True, type=is_valid_SNP, help='SNP tag e.g. "C3G" for mutation at position 3 from C to G')
     parser.add_argument('--out-dir', default="./", type=is_valid_directory, help='output directory')
     parser.add_argument('--no-global-fold', action='store_true', help='Do not run (semi-)global fold (semi: max-window 1000nt)')
     parser.add_argument('--no-local-fold', action='store_true', help='Do not run local fold')
