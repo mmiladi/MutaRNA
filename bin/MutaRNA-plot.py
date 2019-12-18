@@ -596,8 +596,8 @@ def get_SNV_scores(fasta_wt, SNP_tag, out_dir='./'):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='MutaRNA-plot Predict and plot local and global base-pair probabilities if wildtype and mutant RNAs'\
-        '\nSample call: \"python MutaRNA-plot.py --sequence ACGGGCACU --SNP-tag G3C\"'
+    parser = argparse.ArgumentParser(description='MutaRNA-plot predict and plot local and global base-pair probabilities of wildtype and mutant RNAs'\
+        '\nSample call: \"python bin/MutaRNA-plot.py --fasta-wildtype data/sample0.fa --SNP-tag G3C --out-dir tmp --no-global-fold\"'
         )
     
     parser.add_argument('--fasta-wildtype', required=True, type=is_valid_file, help='Input sequence wildtype in fasta format')
