@@ -159,13 +159,10 @@ def run_remuRNA(wild_fa, snp_tags, window=None):
     p = Popen(cmd , stdin=PIPE, shell=True, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate()
     if err:
-        raise RuntimeError("Error in calling remuRNA\n{}\n{}\n".format(out, err))
-
-
-    # os.remove(tmp_fa.name)
-
-    # print out
-    df = pd.read_table(StringIO(out.decode("utf-8")))
+        print("Error in calling remuRNA\n{}\n{}\n".format(out, err))
+        df = pd.DataFrame({'SNP':{0:snp_tags[0]}, 'error':{0:'True:{}'.format(err.decode('utf-8'))}, })
+    else:
+        df = pd.read_table(StringIO(out.decode("utf-8")))
     df['remurna_params'] = params
     return  df
     #return out
