@@ -7,12 +7,17 @@ localdotplot_path = os.path.join(script_path, '../lib/local_dotplot/')
 sys.path.append(localdotplot_path)
 import local_dotplot_lib as ldp
 
+snv_wrapper_path = os.path.join(script_path, '../lib/RNA_SNV_wrapper/')
+sys.path.append(snv_wrapper_path)
+import snv_wrapper
+
+
 from matplotlib import pyplot as plt
 import seaborn as sns
 
 import numpy as np
 import argparse
-
+import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import itertools
@@ -565,6 +570,34 @@ def get_mutation_rec(wild_rec, SNP_tag):
     rec_mut = SeqRecord(mut_seq, id=wild_rec.id + '-MUTANT')
     return rec_mut
 
+def filter_SNV_columns(df):
+    clean_columns = set(['SNP', 'd', 'd_max', 'interval', 'interval.1', 'max_k',
+       'p-value', 'p-value.1', 'r_min', 'rnasnp_params', 'w']
+        + ['SNP', 'MFE(wt)', 'MFE(mu)', 'dMFE', 'H(wt||mu)'])
+    return df.loc[:, df.columns.isin(clean_columns)].copy()
+
+def get_SNV_scores(fasta_wt, SNP_tag, out_dir='./'):
+
+    df_remuRNA = snv_wrapper.run_remuRNA(fasta_wt, [SNP_tag], window=None)
+    df_RNAsnp1 = snv_wrapper.run_RNAsnp(fasta_wt, [SNP_tag], window=None, plfold_W=None, plfold_L=None, mode=1)
+    df_RNAsnp2 = snv_wrapper.run_RNAsnp(fasta_wt, [SNP_tag], window=None, plfold_W=None, plfold_L=None, mode=2)
+    
+    df_RNAsnp12 = pd.concat([df_RNAsnp1, df_RNAsnp2], sort=True)
+    
+  
+    
+    csv_remuRNA = os.path.join(out_dir, 'remuRNA.csv')
+    csv_RNAsnp1 = os.path.join(out_dir, 'RNAsnp_mode1.csv')
+    csv_RNAsnp2 = os.path.join(out_dir, 'RNAsnp_mode2.csv')
+    csv_RNAsnp12 = os.path.join(out_dir, 'RNAsnp.csv')
+    
+    filter_SNV_columns(df_remuRNA).to_csv(csv_remuRNA)
+    filter_SNV_columns(df_RNAsnp1).to_csv(csv_RNAsnp1)
+    filter_SNV_columns(df_RNAsnp2).to_csv(csv_RNAsnp2)
+    filter_SNV_columns(df_RNAsnp12).to_csv(csv_RNAsnp12)
+    print('SNP scores were saved to:', csv_remuRNA, csv_RNAsnp12)
+    return (csv_remuRNA, csv_RNAsnp12)
+
 
 if __name__ == '__main__':
 
@@ -574,7 +607,7 @@ if __name__ == '__main__':
     
     parser.add_argument('--fasta-wildtype', required=True, type=is_valid_file, help='Input sequence wildtype in fasta format')
     #parser.add_argument('--sequence-wild', required=True, type=is_valid_sequence, help='Input sequence string wildtype')
-    parser.add_argument('--sequence-mutant',type=is_valid_sequence, help='Input sequence string mutant (support disabled)')
+    #parser.add_argument('--sequence-mutant',type=is_valid_sequence, help='Input sequence string mutant (support disabled)')
     parser.add_argument('--SNP-tag',  required=True, type=is_valid_SNP, help='SNP tag e.g. "C3G" for mutation at position 3 from C to G')
     parser.add_argument('--out-dir', default="./", type=is_valid_directory, help='output directory')
     parser.add_argument('--no-global-fold', action='store_true', help='Do not run (semi-)global fold (semi: max-window 1000nt)')
@@ -582,6 +615,7 @@ if __name__ == '__main__':
     parser.add_argument('--local-W',  default=200, type=int, help='Window length for local fold')
     parser.add_argument('--local-L',  default=150, type=int, help='Max base-pair interaction span for local fold')
     parser.add_argument('--global-maxL',  default=1000, type=int, help='Maximum interaction span of global length.')
+    parser.add_argument('--no-SNP-score', action='store_true', help='Do not run SNP structure abberation scores with RNAsnp and remuRNA')
 
 
 
@@ -592,6 +626,9 @@ if __name__ == '__main__':
     #rec_wild = args.sequence_wild
     rec_wild = SeqIO.read(args.fasta_wildtype, 'fasta')
     rec_wild.id = "RNA"
+
+    args.sequence_mutant = None # Disable sequence option 
+
     if args.sequence_mutant is None and args.SNP_tag is None:
         raise RuntimeError("Exactly one of these options must be passed (--sequence-mutant, --SNP-tag) but none is provided.")
     
@@ -613,3 +650,7 @@ if __name__ == '__main__':
 
     plot_circos_seq_SNP(rec_wild, SNP_tag, rec_mut=rec_mutant, do_local=not args.no_local_fold, do_global=not args.no_global_fold, 
     local_global_out_dir=args.out_dir, local_L=args.local_L, local_W=args.local_W, global_L=args.global_maxL)
+    
+    if not args.no_SNP_score:
+        get_SNV_scores(args.fasta_wildtype, SNP_tag, out_dir=args.out_dir)
+
