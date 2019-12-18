@@ -8,7 +8,7 @@ import os
 import pandas as pd
 from tempfile import NamedTemporaryFile
 from subprocess import Popen, PIPE
-from StringIO import StringIO
+from io import StringIO
 import time
 from math import ceil, floor
 import re
@@ -28,8 +28,8 @@ import re
 # sys.path = [edenrna_src_dir] + sys.path
 
 
-def main(argv):
-    print sys.argv
+def main_SNV_wrapper(argv):
+    print (sys.argv)
     input_file = sys.argv[1]
     output_file_prefix = sys.argv[2]
     window = int(sys.argv[3])
@@ -52,19 +52,19 @@ def main(argv):
     lcount = 0
     fasta_sequences = list(SeqIO.parse(open(input_file), 'fasta'))
     total_size = len(fasta_sequences)
-    ranges =  range(0, total_size, int(ceil(total_size/float(num_splits))))
-    print 'runner.py args:' + ' '.join(sys.argv)
-    print 'rangesA: ', ranges
+    ranges =  list(range(0, total_size, int(ceil(total_size/float(num_splits)))))
+    print('runner.py args:' + ' '.join(sys.argv))
+    print('rangesA: ', ranges)
     if ranges[-1] != total_size:
         ranges.append(total_size)
-    print 'rangesB: ', ranges
-    print 'runner on range: ', ranges[split_id], ranges[split_id+1]
+    print ('rangesB: ', ranges)
+    print ('runner on range: ', ranges[split_id], ranges[split_id+1])
     runRnasnp = True#False
     runRemurna = True#False
     runRase = False
     for fasta in fasta_sequences[ranges[split_id]: ranges[split_id+1]]:
         lcount += 1
-        print '\r{}..' .format(lcount), 
+        print ('\r{}..' .format(lcount),) 
         id, desc, sequence = fasta.id,fasta.description, str(fasta.seq)
         #extract snp from description or id
         match = re.search("(\w\d+\w)$", desc)
@@ -72,7 +72,7 @@ def main(argv):
             raise RuntimeError('SNP tag not found for desc:{}'.format(desc))
 
         snp = [match.group(1)]
-        print snp,
+        print (snp,)
         tmp_seq_fa = NamedTemporaryFile(suffix='.fa', delete=False)
         tmp_seq_fa.write(">" +desc + "\n")
         tmp_seq_fa.write(sequence)
@@ -213,7 +213,7 @@ def run_RNAsnp(wild_fa, snp_tags, window=None, plfold_window=None,  mode=None, W
 
     if window is not None:
         if window > 800:
-            print "WARNING RNAsnp window reduced to max possible: 800"
+            print ("WARNING RNAsnp window reduced to max possible: 800")
             window = 800
         params += '-w {} '.format(int(window))
     cmd += params + param_string
@@ -222,7 +222,7 @@ def run_RNAsnp(wild_fa, snp_tags, window=None, plfold_window=None,  mode=None, W
     out, err = p.communicate()
     if err:
         #raise RuntimeError("Error in calling RNAsnp\n{}\n{}\n".format(out, err))
-        print "Error in calling RNAsnp\n{}\n{}\n".format(out, err)
+        print ("Error in calling RNAsnp\n{}\n{}\n".format(out, err))
     #print out
 
     # os.remove(snp_file.name)
@@ -244,4 +244,4 @@ def run_RNAsnp(wild_fa, snp_tags, window=None, plfold_window=None,  mode=None, W
 
 
 if __name__ == "__main__":
-   main(sys.argv[1:])
+   main_SNV_wrapper(sys.argv[1:])
