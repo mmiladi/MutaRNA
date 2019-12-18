@@ -217,7 +217,6 @@ def create_circos_annotation(CDS_len, utr5_len, utr3_len, snp_locs, snp_names):
 
 def plot_circos_seq_annotate(rec, annotate_indices, annotate_names, local_fold=False, 
                              plotted_seq_lenght=None,utr5_l=0, utr3_l = 0,color='r',dp_full = None,suffix='' ):
-    from Bio import SeqIO
  
     seq = rec.seq
 
@@ -317,8 +316,6 @@ def plot_up_dict(up_dic, plot_lims=None, title='XX', fig=None, diff=False,tidy=F
     if ticks_label_step != ticks_step:
         labels = [item.get_text() for item in ax.get_xticklabels()]
         labels_locs = ax.get_xticks()
-        print("************")
-        print(labels, labels_locs)
         pruned_labels = [str(loc)  if (loc%ticks_label_step)==0 else '' for loc, lab in zip(labels_locs, labels)]
         ax.set_xticklabels(pruned_labels)
 
@@ -490,8 +487,6 @@ def plot_unpaired_probs(up_file_pairs, plot_heatmap=False,rang=None, out_dir='./
 
 def plot_circos_seq_SNP(rec_wild, SNP_tag, rec_mut, do_local=True,do_global=False, plotted_seq_lenght=None,
 dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_out_dir='./', local_L=150, local_W=200, global_L=1000):
-    from Bio import SeqIO
-
     
     ID = '_'.join(rec_wild.id.split('|')[:2]) # +'_'+SNP_tag#"".join(x for x in rec_wild.id if x not in ['|','<', '>'])
     utr5_l, utr3_l = 0, 0 
@@ -519,7 +514,7 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
         if len(SNP_tag) > 0 :
             matches =  re.match('(\D)(\d+)(\D)', SNP_tag)
             if not matches:
-                raise RuntimeError("No matches founs for tag:".format(SNP_tag)) 
+                raise RuntimeError("No matches founs for tag:{}".format(SNP_tag)) 
             wild_char, loc, mut_char = matches.group(1), int(matches.group(2)), matches.group(3)
 
             annot_locs += [loc]
@@ -559,7 +554,7 @@ def get_mutation_rec(wild_rec, SNP_tag):
     wild_seq = wild_rec.seq
     matches =  re.match('(\D)(\d+)(\D)', SNP_tag)
     if not matches:
-        raise RuntimeError("No matches founs for tag:".format(SNP_tag)) 
+        raise RuntimeError("No matches founs for tag:{}".format(SNP_tag)) 
     wild_char, loc, mut_char = matches.group(1), int(matches.group(2)), matches.group(3)
     if (wild_seq[loc-1].upper() != wild_char.upper()):
         print("WARNING!: SNP {} wild char expected: {}, but found non-matching:{} on wildtype sequences".format(SNP_tag, wild_char, wild_seq[loc-1]))
