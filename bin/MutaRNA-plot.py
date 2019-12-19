@@ -49,7 +49,7 @@ def is_valid_directory(dir_name):
     if os.path.isdir(dir_name):
         return os.path.abspath(dir_name)
     else:
-        raise FileNotFoundError(os.path.abspath(dir_name))
+        raise NotADirectoryError(os.path.abspath(dir_name))
 
 def is_valid_sequence(s):
     rec = SeqRecord(Seq(s.upper().replace('T','U'), IUPAC.unambiguous_rna), id="RNA")
@@ -604,7 +604,7 @@ if __name__ == '__main__':
     #parser.add_argument('--sequence-wild', required=True, type=is_valid_sequence, help='Input sequence string wildtype')
     #parser.add_argument('--sequence-mutant',type=is_valid_sequence, help='Input sequence string mutant (support disabled)')
     parser.add_argument('--SNP-tag',  required=True, type=is_valid_SNP, help='SNP tag e.g. "C3G" for mutation at position 3 from C to G')
-    parser.add_argument('--out-dir', default="./", type=is_valid_directory, help='output directory')
+    parser.add_argument('--out-dir', default="./", type=is_valid_directory, help='path the output directory. The directory must already exist.')
     parser.add_argument('--no-global-fold', action='store_true', help='Do not run (semi-)global fold (semi: max-window 1000nt)')
     parser.add_argument('--no-local-fold', action='store_true', help='Do not run local fold')
     parser.add_argument('--local-W',  default=200, type=int, help='Window length for local fold')
