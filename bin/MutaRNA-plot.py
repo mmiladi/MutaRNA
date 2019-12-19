@@ -571,9 +571,10 @@ def get_mutation_rec(wild_rec, SNP_tag):
 
 def filter_SNV_columns(df, clean_columns=None):
     if clean_columns is None:
-        clean_columns = set(['tool','SNP', 'd', 'd_max', 'interval', 'interval.1',
+        clean_columns = list(set(['tool','SNP', 'd', 'd_max', 'interval', 'interval.1',
         'p-value', 'p-value.1', 'r_min', 'rnasnp_params', 'w']
-            + ['SNP', 'MFE(wt)', 'MFE(mu)', 'dMFE', 'H(wt||mu)'])
+            + ['SNP', 'MFE(wt)', 'MFE(mu)', 'dMFE', 'H(wt||mu)']))
+    clean_columns += ['tool', 'rnasnp_params']
     return df.loc[:, df.columns.isin(clean_columns)].copy()
 
 def get_SNV_scores(fasta_wt, SNP_tag, out_dir='./'):
@@ -584,11 +585,11 @@ def get_SNV_scores(fasta_wt, SNP_tag, out_dir='./'):
 
     df_RNAsnp1 = snv_wrapper.run_RNAsnp(fasta_wt, [SNP_tag], window=None, plfold_W=None, plfold_L=None, mode=1)
     df_RNAsnp1['tool'] = 'RNAsnp'
-    df_RNAsnp1 = filter_SNV_columns(df_RNAsnp1, ['SNP','interval', 'd_max', 'p-value']).rename(columns={'d_max':'distance'})
+    df_RNAsnp1 = filter_SNV_columns(df_RNAsnp1, ['SNP','interval', 'd_max', 'p-value']).rename(columns={'d_max':'distance', 'rnasnp_params':'params'})
 
     df_RNAsnp2 = snv_wrapper.run_RNAsnp(fasta_wt, [SNP_tag], window=None, plfold_W=None, plfold_L=None, mode=2)
     df_RNAsnp2['tool'] = 'RNAsnp'
-    df_RNAsnp2 = filter_SNV_columns(df_RNAsnp2, ['SNP','d', 'interval', 'p-value']).rename(columns={'d':'distance'})
+    df_RNAsnp2 = filter_SNV_columns(df_RNAsnp2, ['SNP','d', 'interval', 'p-value']).rename(columns={'d':'distance', 'rnasnp_params':'params'})
 
 
     df_RNAsnp12 = pd.concat([df_RNAsnp1, df_RNAsnp2], sort=True)
