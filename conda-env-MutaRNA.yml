@@ -125,6 +125,7 @@ dependencies:
   - parso=0.5.1=py_0
   - patsy=0.5.1=py_0
   - pcre=8.43=he1b5a44_0
+  - pdf2svg=0.2.3=hfc5b85c_0
   - perl=5.26.2=h516909a_1006
   - perl-autoloader=5.74=pl526_2
   - perl-carp=1.38=pl526_3
@@ -164,6 +165,8 @@ dependencies:
   - pip=19.3.1=py37_0
   - pixman=0.38.0=h516909a_1003
   - pkg-config=0.29.2=h14c3975_1005
+  - poppler=0.67.0=h14e79db_8
+  - poppler-data=0.4.9=1
   - prometheus_client=0.7.1=py_0
   - prompt_toolkit=2.0.10=py_0
   - pthread-stubs=0.4=h14c3975_1001

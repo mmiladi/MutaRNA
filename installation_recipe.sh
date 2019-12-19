@@ -22,6 +22,3 @@ cd r-chie
 # Install R-chie's R4RNA library within the conda env R's library!
 my_R_LIB_PATH=$(dirname $(which R))/../lib/R/library/
 R -e 'install.packages("R4RNA", repos = NULL, destdir="'$my_R_LIB_PATH'")'
-##NOTE!!!
-# inkscape is needed for pdf->svg conversion of rchie-plots
-inkscape --version
