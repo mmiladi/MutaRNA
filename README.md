@@ -45,6 +45,7 @@ Outputs are stored under the current directory (by default) or the specified pat
 * Local 
 
 The results under the `local/` directory contain the visualization of base-pairing probabilities as computed by RNAplfold under different conditions. The plots are generated in two file formats (`.png` and `svg`). 
+
     - `RNA-WILD-circos`: The base pair probabilities of the wild type in circular Circos form. 
     - `RNA-MUTANT-circos`: The base pair probabilities of the mutant in circular Circos form. 
     - `RNA-MUTANT-removed-circos`: The weakened base-pairing potentials in the form of probability difference between WT and mutant.
@@ -58,5 +59,6 @@ The results under the `local/` directory contain the visualization of base-pairi
 The results under the `global/` directory contain the visualization of base-pairing probabilities as computed by RNAplfold. Similar to the local mode but allowing for large base-pair span over the sequence length in a single window. under different conditions. The plots are generated in two file formats (`.png` and `svg`). 
 
 * Predicted structural impact of the mutation:
+
     - `remuRNA.csv` : prediction scores by remuRNA. remuRNA score `(H(WT||MUT))`is the relative entropy between the ensemble of structures in wild type versus mutant RNA. The score reflects the changes in the global structure of the RNA.
     - `RNAsnp.csv` : prediction scores by RNAsnp. RNAsnp scores are generated in two modes (`-m 1`, `-m 2`) of  (semi-)global and local folding and based on the two metrics of base-pairing distance (`d_max`) in both modes and correlation coefficient (`r_min`). RNAsnp further computes the significance of score in term of  `p-value`s against a pre-computed table of sequence with similar features.
