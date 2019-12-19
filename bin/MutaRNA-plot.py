@@ -110,12 +110,12 @@ def write_diff_dp(dp_wild, dp_mut, out_dp):
     
     # dp_removed = '.'.join(
         # out_dp.split('.')[:-1]+['.removed.dp']+out_dp.split('.')[-1:])
-    dp_removed = os.path.join(os.path.dirname(out_dp), os.path.basename(out_dp).replace('.ps','_removed.dp'))
+    dp_removed = os.path.join(os.path.dirname(out_dp), os.path.basename(out_dp).replace('.ps','_weakened.dp'))
     write_dp_from_matrix(diff_mat, out_dp=dp_removed, 
                          template_dp=dp_wild,p_range=[0,1])
     # dp_introduced = '.'.join(
     #     out_dp.split('.')[:-1]+['.introduced.dp']+out_dp.split('.')[-1:])
-    dp_introduced = os.path.join(os.path.dirname(out_dp), os.path.basename(out_dp).replace('.ps','_introduced.dp'))
+    dp_introduced = os.path.join(os.path.dirname(out_dp), os.path.basename(out_dp).replace('.ps','_increased.dp'))
 
     write_dp_from_matrix(diff_mat, out_dp=dp_introduced, 
                          template_dp=dp_wild,p_range=[-1.0,0])
@@ -474,7 +474,7 @@ def plot_unpaired_probs(up_file_pairs, plot_heatmap=False,rang=None, out_dir='./
                 heatmap_up_dict(get_unpaired_probs(up_file), rang, title=os.path.basename(up_file).replace('-MUT-','-').replace('-WT-','-').replace('_lunp',''), 
                                 fig=fig,ax=ax,ticklabel=labeldic[iup])            
             else:
-                plot_up_dict(get_unpaired_probs(up_file), rang, title='Accessibility({})'.format(titledic[iup]),#os.path.basename(up_file).replace('-MUT-','-').replace('-WT-','-').replace('_lunp',''), 
+                plot_up_dict(get_unpaired_probs(up_file), rang, title='',#os.path.basename(up_file).replace('-MUT-','-').replace('-WT-','-').replace('_lunp',''), 
                              fig=fig,tidy=False,diff=ECGs_together
 #                              ax=ax, ticklabel=labeldic[iup]
                             )            
@@ -527,24 +527,24 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
         dpabs, dpremove, dpintroduce = write_diff_dp(dp_wild, dp_mut, dp_diff)
 
         run_dot2circ(dp_diff, rec_mut.id+suffix+'-diff', out_dir=out_dir)
-        run_dot2circ(dpremove, rec_mut.id+suffix+'-removed', out_dir=out_dir)
-        run_dot2circ(dpintroduce, rec_mut.id+suffix+'-introduced', out_dir=out_dir)
+        run_dot2circ(dpremove, rec_mut.id+suffix+'-weakened', out_dir=out_dir)
+        run_dot2circ(dpintroduce, rec_mut.id+suffix+'-increased', out_dir=out_dir)
         
         if dotplot is True:
-            ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild), filename=ID+'-WILD', title_suffix=ID+'\n'+r'$P({\rm wt})$', what='basepairs',inverse=True, out_dir=out_dir)#, gene_loc=[2,10])
-            ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_mut), filename=ID+'-MUTANT', title_suffix=ID+'\n'+r'$P({\rm mut})$''\n'+r'$P({\rm wt})$''-MUTANT', what='basepairs',inverse=True, out_dir=out_dir)
+            ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild), filename=ID+'-WILD', title_suffix=ID+'\n'+r'$P({\rm WT})$', what='basepairs',inverse=True, out_dir=out_dir)#, gene_loc=[2,10])
+            ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_mut), filename=ID+'-MUTANT', title_suffix=ID+'\n'+r'$P({\rm mutant})$''\n'+r'$P({\rm wt})$''-MUTANT', what='basepairs',inverse=True, out_dir=out_dir)
 
             ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild)-ldp.parse_dp_ps(dp_mut), colormap='seismic', vmin=-1.0, vmax=1.0,
-                                filename=ID+'-DIFF',title_suffix=ID+'\n'+r'$\Delta = P({\rm wt})-P({\rm mut})$', what='basepairs',inverse=True, out_dir=out_dir)
+                                filename=ID+'-DIFF',title_suffix=ID+'\n'+r'$\Delta = P({\rm WT})-P({\rm mutant})$', what='basepairs',inverse=True, out_dir=out_dir)
             #ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_diff), filename=ID+'-ABSDIFF',title_suffix=ID+'-ABSDIFF', what='basepairs',inverse=True, out_dir=out_dir)
             #ldp.plot_heat_maps(None, ldp.parse_dp_ps(dpremove), filename=ID+'-REMOVED', title_suffix=ID+'-REMOVED', what='basepairs',inverse=True, out_dir=out_dir)
             #ldp.plot_heat_maps(None, ldp.parse_dp_ps(dpintroduce), filename=ID+'-INTRODUCED', title_suffix=ID+'-INTRODUCED', what='basepairs',inverse=True, out_dir=out_dir)
             
             ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild)+ldp.parse_dp_ps(dp_mut).transpose(), filename=ID+'-WT-MUT', what='basepairs',
-                    inverse=True, interactive=False, gene_loc=None,title_suffix=ID+'-'+SNP_tag, out_dir=out_dir, upper_triangle_txt='wt',lower_triangle_txt='mut')
+                    inverse=True, interactive=False, gene_loc=None,title_suffix=ID+'-'+SNP_tag+'\n'r'$P({\rm WT})$, $P({\rm mutant})$', out_dir=out_dir, upper_triangle_txt='wt',lower_triangle_txt='mut')
             
             ldp.plot_heat_maps(None, ldp.parse_dp_ps(dpremove)+ldp.parse_dp_ps(dpintroduce).transpose(), filename=ID+'-REMOVED-INTRODUCED', what='basepairs',
-                    inverse=True, interactive=False, gene_loc=None,title_suffix=ID+'\n'+r'$|\Delta| = |P({\rm wt})-P({\rm mut})|$', out_dir=out_dir, upper_triangle_txt='weakened\n' + r'    $\Delta>0$',lower_triangle_txt='increased\n' + r'    $\Delta<0$')
+                    inverse=True, interactive=False, gene_loc=None,title_suffix=ID+'\n'+r'$|\Delta| = |P({\rm WT})-P({\rm mutant})|$', out_dir=out_dir, upper_triangle_txt='weakened\n' + r'    $\Delta>0$',lower_triangle_txt='increased\n' + r'    $\Delta<0$')
 
         if ECGplot is True:
     #         plot_up_dict(u, None, title=ID, fig=myfig,tidy=True)
@@ -590,10 +590,10 @@ def get_SNV_scores(fasta_wt, SNP_tag, out_dir='./'):
     csv_RNAsnp12 = os.path.join(out_dir, 'RNAsnp.csv')
 
     
-    filter_SNV_columns(df_remuRNA).to_csv(csv_remuRNA)
-    filter_SNV_columns(df_RNAsnp1).to_csv(csv_RNAsnp1)
-    filter_SNV_columns(df_RNAsnp2).to_csv(csv_RNAsnp2)
-    filter_SNV_columns(df_RNAsnp12).to_csv(csv_RNAsnp12)
+    filter_SNV_columns(df_remuRNA).to_csv(csv_remuRNA, index=False)
+    filter_SNV_columns(df_RNAsnp1).to_csv(csv_RNAsnp1, index=False)
+    filter_SNV_columns(df_RNAsnp2).to_csv(csv_RNAsnp2, index=False)
+    filter_SNV_columns(df_RNAsnp12).to_csv(csv_RNAsnp12, index=False)
     print('SNP scores were saved to:', csv_remuRNA, csv_RNAsnp12)
     return (csv_remuRNA, csv_RNAsnp12)
 
