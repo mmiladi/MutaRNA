@@ -203,7 +203,7 @@ def create_circos_annotation(CDS_len, utr5_len, utr3_len, snp_locs, snp_names, C
         start += utr5_len + 1 # Tocheck: maybe plus one not needed?
     if CDS_len is not None:
         
-        formatted_str += 'seq {} {} + CDS_label +' fill_color=green,r0=1.01r,r1=1.01r+20p\n'.format(start, start+CDS_len)
+        formatted_str += 'seq {} {} {} fill_color=green,r0=1.01r,r1=1.01r+20p\n'.format(start, start+CDS_len,  CDS_label)
         start += CDS_len + 1 # Tocheck: maybe plus one not needed?
     if utr3_len is not None:
         formatted_str += 'seq {} {} 3UTR fill_color=blue,r0=1.01r,r1=1.01r+20p\n'.format(start, start+utr3_len)
@@ -631,6 +631,7 @@ if __name__ == '__main__':
     parser.add_argument('--local-L',  default=150, type=int, help='Max base-pair interaction span for local fold')
     parser.add_argument('--global-maxL',  default=1000, type=int, help='Maximum interaction span of global length.')
     parser.add_argument('--no-SNP-score', action='store_true', help='Do not run SNP structure abberation scores with RNAsnp and remuRNA')
+    parser.add_argument('--enable-long-range', action='store_true', help='predict and plot long-range interactions of wildtype and mutant RNAs using IntaRNA')
 
 
 
@@ -662,10 +663,19 @@ if __name__ == '__main__':
         print ("Note: global and local outputs would be the same, since sequence length is shorter than bp-interaction lengnth. ")
         #raise RuntimeError ("Wildtype and mutant sequences have unequal lengths. wild:{} != mutant:{}".format(len(rec_mutant), len(args.sequence_wild)))
 
-
+   
     plot_circos_seq_SNP(rec_wild, SNP_tag, rec_mut=rec_mutant, do_local=not args.no_local_fold, do_global=not args.no_global_fold, 
     local_global_out_dir=args.out_dir, local_L=args.local_L, local_W=args.local_W, global_L=args.global_maxL)
     
     if not args.no_SNP_score:
         get_SNV_scores(args.fasta_wildtype, SNP_tag, out_dir=args.out_dir)
+
+    if args.enable_long_range is True:
+        lrdir = os.path.join(args.out_dir, 'long-range/')
+        os.makedirs(lrdir, exist_ok=True)     
+        import MutaRNA_long_range as mutLR
+
+        mutLR.run_all_SNP(args.fasta_wildtype, args.SNP_tag,
+                out_dir=lrdir)
+
 
