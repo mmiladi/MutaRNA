@@ -259,7 +259,7 @@ def get_unpaired_probs(unp_file):
             assert pos not in up_dic
             up_dic[pos] = up_prob
             
-    
+    #print('Parsed ', unp_file)
     return up_dic
 
 
@@ -271,6 +271,7 @@ def plot_up_dict(up_dic, plot_lims=None, title='XX', fig=None, diff=False,tidy=F
     if fig is None:
         fig = plt.figure(figsize=(9, 3))
     x, y = list(x), list(y)
+    # print(list(zip(x,y)))
     ax = fig.add_subplot(111) 
     ax.plot(x, y, label=title, alpha=0.8)
     if not tidy:
@@ -503,7 +504,7 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
         local_fold_runs   += [(False,gdir)] 
 
     for (local_fold, out_dir) in local_fold_runs:
-        dp_wild, unp_wild = call_vienna_plfold(rec_wild.seq, ID, local_fold, global_L=global_L, out_dir=out_dir)
+        dp_wild, unp_wild = call_vienna_plfold(rec_wild.seq, ID, local_fold, local_L=local_L, local_W=local_W, global_L=global_L, out_dir=out_dir)
         create_circos_annotation(len(rec_wild), utr5_l, utr3_l, annot_locs, annot_names)
         run_dot2circ(dp_wild, ID+'-WILD'+suffix, out_dir=out_dir)
         
@@ -566,7 +567,7 @@ def get_mutation_rec(wild_rec, SNP_tag):
     return rec_mut
 
 def filter_SNV_columns(df):
-    clean_columns = set(['SNP', 'd', 'd_max', 'interval', 'interval.1', 'max_k',
+    clean_columns = set(['tool','SNP', 'd', 'd_max', 'interval', 'interval.1',
        'p-value', 'p-value.1', 'r_min', 'rnasnp_params', 'w']
         + ['SNP', 'MFE(wt)', 'MFE(mu)', 'dMFE', 'H(wt||mu)'])
     return df.loc[:, df.columns.isin(clean_columns)].copy()
@@ -574,9 +575,11 @@ def filter_SNV_columns(df):
 def get_SNV_scores(fasta_wt, SNP_tag, out_dir='./'):
 
     df_remuRNA = snv_wrapper.run_remuRNA(fasta_wt, [SNP_tag], window=None)
+    df_remuRNA['tool'] = 'remuRNA'
     df_RNAsnp1 = snv_wrapper.run_RNAsnp(fasta_wt, [SNP_tag], window=None, plfold_W=None, plfold_L=None, mode=1)
     df_RNAsnp2 = snv_wrapper.run_RNAsnp(fasta_wt, [SNP_tag], window=None, plfold_W=None, plfold_L=None, mode=2)
-    
+    df_RNAsnp1['tool'] = 'RNAsnp'
+    df_RNAsnp2['tool'] = 'RNAsnp'
     df_RNAsnp12 = pd.concat([df_RNAsnp1, df_RNAsnp2], sort=True)
     
   
@@ -585,6 +588,7 @@ def get_SNV_scores(fasta_wt, SNP_tag, out_dir='./'):
     csv_RNAsnp1 = os.path.join(out_dir, 'RNAsnp_mode1.csv')
     csv_RNAsnp2 = os.path.join(out_dir, 'RNAsnp_mode2.csv')
     csv_RNAsnp12 = os.path.join(out_dir, 'RNAsnp.csv')
+
     
     filter_SNV_columns(df_remuRNA).to_csv(csv_remuRNA)
     filter_SNV_columns(df_RNAsnp1).to_csv(csv_RNAsnp1)
