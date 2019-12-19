@@ -5,6 +5,11 @@ import random
 import os
 import re
 
+from scipy.sparse import csr_matrix
+import warnings
+from scipy.sparse import SparseEfficiencyWarning
+warnings.simplefilter('ignore', SparseEfficiencyWarning)
+
 kT = (37+273.15)*1.98717/1000.0  # /* kT in kcal/mol */
 
 VIENNA_BIN_PATH = '' #'/home/milad/1software/bin/'
@@ -430,7 +435,7 @@ def parse_dp_ps_sparse(ps_file, sparse=False, bp_range=None, skip_pos=None):
 
     bp_prob_dict = dict()
     mfe_struct_dict = dict()
-    from scipy.sparse import csr_matrix
+
     if sparse:
         bp_prob_mat = csr_matrix((len(myseq), len(myseq)))
 

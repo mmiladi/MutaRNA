@@ -96,7 +96,7 @@ else:
 
 
 # run circos
-circoscmd = '{0} {1} -outputdir {2} -param image/file**="{3}.png" '.format(
+circoscmd = '{0} {1} -outputdir {2} -param image/file**="{3}.png" -param image/radius*=1000p '.format(
     PERLBIN,
     CIRCOSBIN,
     args.outputdir,

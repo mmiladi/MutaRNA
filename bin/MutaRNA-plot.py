@@ -184,10 +184,10 @@ def run_dot2circ(dp_file, prefix, out_dir=""):
 #     print (err.decode('ascii'))
     has_error = False
     if err:
-        raise RuntimeError("Error in calling dot2circ.py: {} {}\n".format(out, err))
+        raise RuntimeError("Error in calling dot2circ.py: {} {}\n".format(out.decode('utf-8'), err.decode('utf-8')))
 
     
-def create_circos_annotation(CDS_len, utr5_len, utr3_len, snp_locs, snp_names):
+def create_circos_annotation(CDS_len, utr5_len, utr3_len, snp_locs, snp_names, CDS_label=''):
     '''
     Genes formatted Example:
     seq 193 759 CDS fill_color=green,r0=1.01r,r1=1.01r+20p
@@ -202,7 +202,8 @@ def create_circos_annotation(CDS_len, utr5_len, utr3_len, snp_locs, snp_names):
         formatted_str += 'seq {} {} 5UTR fill_color=yellow,r0=1.01r,r1=1.01r+20p\n'.format(start, start+utr5_len)
         start += utr5_len + 1 # Tocheck: maybe plus one not needed?
     if CDS_len is not None:
-        formatted_str += 'seq {} {} CDS fill_color=green,r0=1.01r,r1=1.01r+20p\n'.format(start, start+CDS_len)
+        
+        formatted_str += 'seq {} {} + CDS_label +' fill_color=green,r0=1.01r,r1=1.01r+20p\n'.format(start, start+CDS_len)
         start += CDS_len + 1 # Tocheck: maybe plus one not needed?
     if utr3_len is not None:
         formatted_str += 'seq {} {} 3UTR fill_color=blue,r0=1.01r,r1=1.01r+20p\n'.format(start, start+utr3_len)
@@ -272,7 +273,10 @@ def plot_up_dict(up_dic, plot_lims=None, title='XX', fig=None, diff=False,tidy=F
         fig = plt.figure(figsize=(9, 3))
     x, y = list(x), list(y)
     # print(list(zip(x,y)))
-    ax = fig.add_subplot(111) 
+    if fig.get_axes():
+        ax = fig.get_axes()[0]
+    else:
+        ax = fig.add_subplot(111) 
     ax.plot(x, y, label=title, alpha=0.8)
     if not tidy:
         ax.legend(loc='lower left', framealpha=0.2)#, bbox_to_anchor=(0.0, 1.1))
@@ -474,7 +478,7 @@ def plot_unpaired_probs(up_file_pairs, plot_heatmap=False,rang=None, out_dir='./
                 heatmap_up_dict(get_unpaired_probs(up_file), rang, title=os.path.basename(up_file).replace('-MUT-','-').replace('-WT-','-').replace('_lunp',''), 
                                 fig=fig,ax=ax,ticklabel=labeldic[iup])            
             else:
-                plot_up_dict(get_unpaired_probs(up_file), rang, title='',#os.path.basename(up_file).replace('-MUT-','-').replace('-WT-','-').replace('_lunp',''), 
+                plot_up_dict(get_unpaired_probs(up_file), rang, title='Accessibility({})'.format(titledic[iup]),#os.path.basename(up_file).replace('-MUT-','-').replace('-WT-','-').replace('_lunp',''), 
                              fig=fig,tidy=False,diff=ECGs_together
 #                              ax=ax, ticklabel=labeldic[iup]
                             )            
