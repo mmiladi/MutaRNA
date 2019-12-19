@@ -589,7 +589,7 @@ def get_SNV_scores(fasta_wt, SNP_tag, out_dir='./'):
 
     df_RNAsnp2 = snv_wrapper.run_RNAsnp(fasta_wt, [SNP_tag], window=None, plfold_W=None, plfold_L=None, mode=2)
     df_RNAsnp2['tool'] = 'RNAsnp'
-    df_RNAsnp2 = filter_SNV_columns(df_RNAsnp2, ['SNP','d', 'interval', 'p-value']).rename(columns={'d':'distance', 'rnasnp_params':'params'})
+    df_RNAsnp2 = filter_SNV_columns(df_RNAsnp2, ['SNP', 'interval', 'd',  'p-value']).rename(columns={'d':'distance', 'rnasnp_params':'params'})
 
 
     df_RNAsnp12 = pd.concat([df_RNAsnp1, df_RNAsnp2], sort=True)
@@ -601,11 +601,11 @@ def get_SNV_scores(fasta_wt, SNP_tag, out_dir='./'):
     csv_RNAsnp2 = os.path.join(out_dir, 'RNAsnp_mode2.csv')
     csv_RNAsnp12 = os.path.join(out_dir, 'RNAsnp.csv')
 
-    
-    df_remuRNA.to_csv(csv_remuRNA, index=False)
-    df_RNAsnp1.to_csv(csv_RNAsnp1, index=False)
-    df_RNAsnp2.to_csv(csv_RNAsnp2, index=False)
-    df_RNAsnp12.to_csv(csv_RNAsnp12, index=False)
+
+    df_remuRNA.sort_index(axis=1).to_csv(csv_remuRNA, index=False)
+    df_RNAsnp1.sort_index(axis=1).to_csv(csv_RNAsnp1, index=False)
+    df_RNAsnp2.sort_index(axis=1).to_csv(csv_RNAsnp2, index=False)
+    df_RNAsnp12.sort_index(axis=1).to_csv(csv_RNAsnp12, index=False)
     print('SNP scores were saved to:', csv_remuRNA, csv_RNAsnp12)
     return (csv_remuRNA, csv_RNAsnp12)
 
