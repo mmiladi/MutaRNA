@@ -187,7 +187,7 @@ def run_dot2circ(dp_file, prefix, out_dir=""):
         raise RuntimeError("Error in calling dot2circ.py: {} {}\n".format(out.decode('utf-8'), err.decode('utf-8')))
 
     
-def create_circos_annotation(CDS_len, utr5_len, utr3_len, snp_locs, snp_names, CDS_label=''):
+def create_circos_annotation(CDS_len, utr5_len, utr3_len, snp_locs, snp_names, CDS_label='RNA'):
     '''
     Genes formatted Example:
     seq 193 759 CDS fill_color=green,r0=1.01r,r1=1.01r+20p
