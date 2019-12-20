@@ -199,14 +199,14 @@ def create_circos_annotation(CDS_len, utr5_len, utr3_len, snp_locs, snp_names, C
     start = 0
     formatted_str = ""
     if utr5_len is not None:
-        formatted_str += 'seq {} {} 5UTR fill_color=yellow,r0=1.01r,r1=1.01r+20p\n'.format(start, start+utr5_len)
+        formatted_str += 'seq {} {} 5` fill_color=yellow,r0=1.01r,r1=1.01r+20p\n'.format(start, start+utr5_len)
         start += utr5_len + 1 # Tocheck: maybe plus one not needed?
     if CDS_len is not None:
         
         formatted_str += 'seq {} {} {} fill_color=green,r0=1.01r,r1=1.01r+20p\n'.format(start, start+CDS_len,  CDS_label)
         start += CDS_len + 1 # Tocheck: maybe plus one not needed?
     if utr3_len is not None:
-        formatted_str += 'seq {} {} 3UTR fill_color=blue,r0=1.01r,r1=1.01r+20p\n'.format(start, start+utr3_len)
+        formatted_str += 'seq {} {} 3` fill_color=blue,r0=1.01r,r1=1.01r+20p\n'.format(start, start+utr3_len)
         start += utr3_len + 1 # Tocheck: maybe plus one not needed?
     if snp_locs is not None:
         for i in range(len(snp_locs)):
