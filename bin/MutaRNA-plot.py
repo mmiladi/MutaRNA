@@ -575,9 +575,9 @@ def get_mutation_rec(wild_rec, SNP_tag):
 
 def filter_SNV_columns(df, clean_columns=None):
     if clean_columns is None:
-        clean_columns = list(set(['tool','SNP', 'd', 'd_max', 'interval', 'interval.1',
-        'p-value', 'p-value.1', 'r_min', 'rnasnp_params', 'w']
-            + ['SNP', 'MFE(wt)', 'MFE(mu)', 'dMFE', 'H(wt||mu)']))
+        clean_columns = ['tool','SNP', 'd', 'd_max', 'interval', 'interval.1',
+        'p-value', 'p-value.1', 'r_min', 'rnasnp_params', 'w', 
+        'MFE(wt)', 'MFE(mu)', 'dMFE', 'H(wt||mu)']
     clean_columns += ['tool', 'rnasnp_params']
     return df.loc[:, df.columns.isin(clean_columns)].copy()
 
@@ -585,7 +585,7 @@ def get_SNV_scores(fasta_wt, SNP_tag, out_dir='./'):
 
     df_remuRNA = snv_wrapper.run_remuRNA(fasta_wt, [SNP_tag], window=None)
     df_remuRNA['tool'] = 'remuRNA'
-    df_remuRNA = filter_SNV_columns(df_remuRNA)
+    df_remuRNA = filter_SNV_columns(df_remuRNA, ['SNP','H(wt||mu)', 'MFE(mu)', 'MFE(wt)', 'dMFE'])
 
     df_RNAsnp1 = snv_wrapper.run_RNAsnp(fasta_wt, [SNP_tag], window=None, plfold_W=None, plfold_L=None, mode=1)
     df_RNAsnp1['tool'] = 'RNAsnp'
