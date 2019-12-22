@@ -315,8 +315,17 @@ def plot_up_dict(up_dic, plot_lims=None, title='XX', fig=None, diff=False,tidy=F
 #     ax.axhline(1, linestyle='--', color='k', alpha=0.5) # horizontal lines
     
     ax.set_xlim([min(x)-1, max(x)+1])
-    if not tidy:
-        ax.set_title(title)
+    # if not tidy:
+        # ax.set_title(title)
+    
+    sort_legends = True
+    if sort_legends:
+        handles, labels = ax.get_legend_handles_labels()
+        # sort both labels and handles by labels
+        labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
+        ax.legend(handles, labels)
+
+
     
     if ticks_label_step != ticks_step:
         labels = [item.get_text() for item in ax.get_xticklabels()]
@@ -530,13 +539,13 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
         dp_diff = dp_mut.replace('.ps', '_diff.ps')
         dpabs, dpremove, dpintroduce = write_diff_dp(dp_wild, dp_mut, dp_diff)
 
-        run_dot2circ(dp_diff, rec_mut.id+suffix+'-diff', out_dir=out_dir)
+        #run_dot2circ(dp_diff, rec_mut.id+suffix+'-diff', out_dir=out_dir)
         run_dot2circ(dpremove, rec_mut.id+suffix+'-weakened', out_dir=out_dir)
         run_dot2circ(dpintroduce, rec_mut.id+suffix+'-increased', out_dir=out_dir)
         
         if dotplot is True:
-            ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild), filename=ID+'-WILD', title_suffix=ID+'\n'+r'$P({\rm WT})$', what='basepairs',inverse=True, out_dir=out_dir)#, gene_loc=[2,10])
-            ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_mut), filename=ID+'-MUTANT', title_suffix=ID+'\n'+r'$P({\rm mutant})$''\n'+r'$P({\rm wt})$''-MUTANT', what='basepairs',inverse=True, out_dir=out_dir)
+            #ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild), filename=ID+'-WILD', title_suffix=ID+'\n'+r'$P({\rm WT})$', what='basepairs',inverse=True, out_dir=out_dir)#, gene_loc=[2,10])
+            #ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_mut), filename=ID+'-MUTANT', title_suffix=ID+'\n'+r'$P({\rm mutant})$''\n'+r'$P({\rm wt})$''-MUTANT', what='basepairs',inverse=True, out_dir=out_dir)
 
             ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild)-ldp.parse_dp_ps(dp_mut), colormap='seismic', vmin=-1.0, vmax=1.0,
                                 filename=ID+'-DIFF',title_suffix=ID+'\n'+r'$\Delta = P({\rm WT})-P({\rm mutant})$', what='basepairs',inverse=True, out_dir=out_dir)
@@ -553,7 +562,7 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
         if ECGplot is True:
     #         plot_up_dict(u, None, title=ID, fig=myfig,tidy=True)
             plot_unpaired_probs([(unp_wild, unp_mut)], plot_heatmap=False, out_dir=out_dir)
-            plot_unpaired_probs([(unp_wild, unp_mut)], plot_heatmap=True, out_dir=out_dir)
+            #plot_unpaired_probs([(unp_wild, unp_mut)], plot_heatmap=True, out_dir=out_dir)
 
 def get_mutation_rec(wild_rec, SNP_tag):
     wild_seq = wild_rec.seq
@@ -573,13 +582,18 @@ def get_mutation_rec(wild_rec, SNP_tag):
     rec_mut = SeqRecord(mut_seq, id=wild_rec.id + '-MUTANT')
     return rec_mut
 
-def filter_SNV_columns(df, clean_columns=None):
+def filter_SNV_columns(df, clean_columns=None, select_not_filter=True):
+    if (select_not_filter is True) and (clean_columns is not None):
+        print(clean_columns)
+        clean_columns += ['tool']
+        return df[clean_columns].copy()
     if clean_columns is None:
         clean_columns = ['tool','SNP', 'd', 'd_max', 'interval', 'interval.1',
         'p-value', 'p-value.1', 'r_min', 'rnasnp_params', 'w', 
         'MFE(wt)', 'MFE(mu)', 'dMFE', 'H(wt||mu)']
     clean_columns += ['tool', 'rnasnp_params']
     return df.loc[:, df.columns.isin(clean_columns)].copy()
+
 
 def get_SNV_scores(fasta_wt, SNP_tag, out_dir='./'):
 
@@ -606,7 +620,7 @@ def get_SNV_scores(fasta_wt, SNP_tag, out_dir='./'):
     csv_RNAsnp12 = os.path.join(out_dir, 'RNAsnp.csv')
 
 
-    df_remuRNA.sort_index(axis=1).to_csv(csv_remuRNA, index=False)
+    df_remuRNA.to_csv(csv_remuRNA, index=False)
     df_RNAsnp1.sort_index(axis=1).to_csv(csv_RNAsnp1, index=False)
     df_RNAsnp2.sort_index(axis=1).to_csv(csv_RNAsnp2, index=False)
     df_RNAsnp12.sort_index(axis=1).to_csv(csv_RNAsnp12, index=False)
@@ -632,6 +646,7 @@ if __name__ == '__main__':
     parser.add_argument('--global-maxL',  default=1000, type=int, help='Maximum interaction span of global length.')
     parser.add_argument('--no-SNP-score', action='store_true', help='Do not run SNP structure abberation scores with RNAsnp and remuRNA')
     parser.add_argument('--enable-long-range', action='store_true', help='predict and plot long-range interactions of wildtype and mutant RNAs using IntaRNA')
+    parser.add_argument('--enable-global-fold', action='store_true', help='enable global fold')
 
 
 
@@ -664,7 +679,7 @@ if __name__ == '__main__':
         #raise RuntimeError ("Wildtype and mutant sequences have unequal lengths. wild:{} != mutant:{}".format(len(rec_mutant), len(args.sequence_wild)))
 
    
-    plot_circos_seq_SNP(rec_wild, SNP_tag, rec_mut=rec_mutant, do_local=not args.no_local_fold, do_global=not args.no_global_fold, 
+    plot_circos_seq_SNP(rec_wild, SNP_tag, rec_mut=rec_mutant, do_local=not args.no_local_fold, do_global=(not args.no_global_fold) and (args.enable_global_fold), 
     local_global_out_dir=args.out_dir, local_L=args.local_L, local_W=args.local_W, global_L=args.global_maxL)
     
     if not args.no_SNP_score:
