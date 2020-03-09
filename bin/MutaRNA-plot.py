@@ -519,7 +519,7 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
     for (local_fold, out_dir) in local_fold_runs:
         dp_wild, unp_wild = call_vienna_plfold(rec_wild.seq, ID, local_fold, local_L=local_L, local_W=local_W, global_L=global_L, out_dir=out_dir)
         create_circos_annotation(len(rec_wild), utr5_l, utr3_l, annot_locs, annot_names)
-        run_dot2circ(dp_wild, ID+'-WILD'+suffix, out_dir=out_dir)
+        run_dot2circ(dp_wild, ID+'-WILDTYPE'+suffix, out_dir=out_dir)
         
 
         dp_mut, unp_mut = call_vienna_plfold(rec_mut.seq, rec_mut.id, local_fold, local_L=local_L, local_W=local_W, global_L=global_L,out_dir=out_dir)
@@ -544,7 +544,7 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
         run_dot2circ(dpintroduce, rec_mut.id+suffix+'-increased', out_dir=out_dir)
         
         if dotplot is True:
-            #ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild), filename=ID+'-WILD', title_suffix=ID+'\n'+r'$P({\rm WT})$', what='basepairs',inverse=True, out_dir=out_dir)#, gene_loc=[2,10])
+            #ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild), filename=ID+'-WILDTYPE', title_suffix=ID+'\n'+r'$P({\rm WT})$', what='basepairs',inverse=True, out_dir=out_dir)#, gene_loc=[2,10])
             #ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_mut), filename=ID+'-MUTANT', title_suffix=ID+'\n'+r'$P({\rm mutant})$''\n'+r'$P({\rm wt})$''-MUTANT', what='basepairs',inverse=True, out_dir=out_dir)
 
             ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild)-ldp.parse_dp_ps(dp_mut), colormap='seismic', vmin=-1.0, vmax=1.0,
