@@ -59,8 +59,10 @@ parser.add_argument(
     default="./",
     help="output dir")
 
-
-
+import tempfile
+tmpdir = tempfile.mkdtemp()
+tmpdir +='/'
+print("tmpdir is:", tmpdir)
 args = parser.parse_args()
 
 if args.sequence is not None and args.dp_file is not None:
@@ -83,34 +85,37 @@ else: # dotplot is provided
     print ("ERROR: dotplot file {} does not exist!".format(args.dp_file))
     sys.exit(1)
   if args.local_fold is True:
-    copyfile(args.dp_file, './plfold_dp.ps')
+    copyfile(args.dp_file, tmpdir + '/plfold_dp.ps')
   else:
-    copyfile(args.dp_file, './dot.ps')  
+    copyfile(args.dp_file, tmpdir + '/dot.ps')  
 
 # create circos data
 if args.local_fold is True:
-    call(['./parse_plfold.sh'], shell=True)
+    call(['./parse_plfold.sh ' + tmpdir], shell=True)
 else:
-    call(['./parse_rnafold.sh'], shell=True)
+    call(['./parse_rnafold.sh ' + tmpdir], shell=True)
 
 
+import glob
+print(glob.glob(tmpdir+"/*/*"))
 
 # run circos
-circoscmd = '{0} {1} -outputdir {2} -param image/file**="{3}.png" -param image/radius*=1000p '.format(
+circoscmd = '{0} {1} -outputdir {2} -param image/file**="{3}.png" -param image/radius*=1000p -param karyotype={4}/data/circos.karyotype.txt -param highlights/highlight/file={5}/genes.formatted.txt -param links/link/file={4}/data/circos.bplinks.txt -param plots/plot/file={4}/data/circos.sequence.txt '.format(
     PERLBIN,
     CIRCOSBIN,
     args.outputdir,
-    args.prefix)
+    args.prefix,
+    tmpdir,
+    args.outputdir)
 
 # Overide chr seq name
 if (args.title):
-  with open('./data/circos.karyotype.txt') as in_txt:
+  with open(tmpdir + '/data/circos.karyotype.txt') as in_txt:
     line = in_txt.readline()
   assert ('chr - seq seq ' in line)
-  with open('./data/circos.karyotype.txt', 'w') as out_txt:
+  with open(tmpdir + '/data/circos.karyotype.txt', 'w') as out_txt:
     out_txt.write(line.replace('chr - seq seq ', 'chr - seq {} '.format(args.title)))
   circoscmd += "-param ideogram/show_label=yes "
-
 
 #circoscmd += "" 
 #"""\

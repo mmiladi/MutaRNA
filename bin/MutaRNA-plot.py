@@ -187,7 +187,7 @@ def run_dot2circ(dp_file, prefix, out_dir=""):
         raise RuntimeError("Error in calling dot2circ.py: {} {}\n".format(out.decode('utf-8'), err.decode('utf-8')))
 
     
-def create_circos_annotation(CDS_len, utr5_len, utr3_len, snp_locs, snp_names, CDS_label='RNA'):
+def create_circos_annotation(CDS_len, utr5_len, utr3_len, snp_locs, snp_names, out_dir, CDS_label='RNA'):
     '''
     Genes formatted Example:
     seq 193 759 CDS fill_color=green,r0=1.01r,r1=1.01r+20p
@@ -212,9 +212,10 @@ def create_circos_annotation(CDS_len, utr5_len, utr3_len, snp_locs, snp_names, C
         for i in range(len(snp_locs)):
             formatted_str += 'seq {} {} c.-{} fill_color=vdred,r0=1.03r,r1=1.03r+20p\n'.format(snp_locs[i], snp_locs[i]+1, snp_names[i])
     # print (formatted_str)
-    genes_file =  '{}/dot2circ/data/genes.formatted.txt'.format(script_path)
+    genes_file =  '{}/genes.formatted.txt'.format(out_dir)
     with open (genes_file, 'w') as genes_out:
         genes_out.write(formatted_str)
+    return genes_file
 
 def plot_circos_seq_annotate(rec, annotate_indices, annotate_names, local_fold=False, 
                              plotted_seq_lenght=None,utr5_l=0, utr3_l = 0,color='r',dp_full = None,suffix='' ):
@@ -522,7 +523,7 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
 
     for (local_fold, out_dir) in local_fold_runs:
         dp_wild, unp_wild = call_vienna_plfold(rec_wild.seq, ID, local_fold, local_L=local_L, local_W=local_W, global_L=global_L, out_dir=out_dir)
-        create_circos_annotation(len(rec_wild), utr5_l, utr3_l, annot_locs, annot_names)
+        genes_format_file =create_circos_annotation(len(rec_wild), utr5_l, utr3_l, annot_locs, annot_names,out_dir=out_dir)
         run_dot2circ(dp_wild, ID+'-WILDTYPE'+suffix, out_dir=out_dir)
         
 
@@ -538,7 +539,7 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
             annot_locs += [snp_loc]
             annot_names += [SNP_tag]
 
-        create_circos_annotation(len(rec_mut), utr5_l, utr3_l, annot_locs, annot_names)
+        create_circos_annotation(len(rec_mut), utr5_l, utr3_l, annot_locs, annot_names,out_dir=out_dir)
         run_dot2circ(dp_mut, rec_mut.id+suffix, out_dir=out_dir)
         dp_diff = dp_mut.replace('.ps', '_diff.ps')
         dpabs, dpremove, dpintroduce = write_diff_dp(dp_wild, dp_mut, dp_diff)
