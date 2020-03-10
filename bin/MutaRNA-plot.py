@@ -264,7 +264,7 @@ def get_unpaired_probs(unp_file):
     return up_dic
 
 
-def plot_up_dict(up_dic, plot_lims=None, title='XX', fig=None, diff=False,tidy=False):
+def plot_up_dict(up_dic, plot_lims=None, title='XX', fig=None, diff=False,tidy=False,mutation_pos=None):
     if plot_lims is None:
         x, y = up_dic.keys(), up_dic.values()
     else:
@@ -311,6 +311,9 @@ def plot_up_dict(up_dic, plot_lims=None, title='XX', fig=None, diff=False,tidy=F
     # or if you want different settings for the grids:                               
     ax.grid(which='minor', alpha=0.5)
     ax.axhline(0)
+
+    if mutation_pos is not None:
+        ax.axvline(mutation_pos-0.5, color='r', alpha=0.5)        
 #     ax.axhline(0, linestyle='--', color='k', alpha=0.5) # horizontal lines
 #     ax.axhline(1, linestyle='--', color='k', alpha=0.5) # horizontal lines
     
@@ -330,7 +333,7 @@ def plot_up_dict(up_dic, plot_lims=None, title='XX', fig=None, diff=False,tidy=F
     if ticks_label_step != ticks_step:
         labels = [item.get_text() for item in ax.get_xticklabels()]
         labels_locs = ax.get_xticks()
-        pruned_labels = [str(loc)  if (loc%ticks_label_step)==0 else '' for loc, lab in zip(labels_locs, labels)]
+        pruned_labels = [str(loc)  if ((loc%ticks_label_step)==0 and loc!=0) else '' for loc, lab in zip(labels_locs, labels)]
         ax.set_xticklabels(pruned_labels)
 
 
@@ -431,7 +434,8 @@ def heatmap_up_dict(up_dic, plot_lims=None, title='XX', ax=None,fig=None, diff=F
     ax.set_title(title,rotation=90,va='bottom')
 
 
-def plot_unpaired_probs(up_file_pairs, plot_heatmap=False,rang=None, out_dir='./',ECGs_together=True, dynamic_width_ecg=True):
+def plot_unpaired_probs(up_file_pairs, plot_heatmap=False,rang=None, 
+    out_dir='./',ECGs_together=True, dynamic_width_ecg=True, mutation_pos=None):
     plt.rc('axes', #prop_cycle=(cycler('color', ['k',(0.8901960784313725, 0.10196078431372549, 0.10980392156862745)]
             prop_cycle=(cycler('color', sns.color_palette('colorblind', 3))))
             
@@ -467,7 +471,7 @@ def plot_unpaired_probs(up_file_pairs, plot_heatmap=False,rang=None, out_dir='./
             else:
                 fig = plt.figure(figsize=(fig_width, 2))
             plot_up_dict(dict_diff, rang, title='Accessibility(wt) - Accessibility(mut)' #os.path.basename(up_file_wild).replace('-WT-','-').replace('_lunp','-DIFF')
-                         , fig=fig, diff=True,tidy=True)
+                         , fig=fig, diff=True,tidy=True,mutation_pos=mutation_pos)
         fig.savefig(os.path.join(out_dir, os.path.basename(up_file_wild)+'-diff-{}.png'.format(title_key)), bbox_inches='tight', pad_inches=0.2
                    )
         fig.savefig(os.path.join(out_dir, os.path.basename(up_file_wild)+'-diff-{}.svg'.format(title_key)), bbox_inches='tight', pad_inches=0.2
@@ -488,7 +492,7 @@ def plot_unpaired_probs(up_file_pairs, plot_heatmap=False,rang=None, out_dir='./
                                 fig=fig,ax=ax,ticklabel=labeldic[iup])            
             else:
                 plot_up_dict(get_unpaired_probs(up_file), rang, title='Accessibility({})'.format(titledic[iup]),#os.path.basename(up_file).replace('-MUT-','-').replace('-WT-','-').replace('_lunp',''), 
-                             fig=fig,tidy=False,diff=ECGs_together
+                             fig=fig,tidy=False,diff=ECGs_together,mutation_pos=mutation_pos
 #                              ax=ax, ticklabel=labeldic[iup]
                             )            
             
@@ -519,19 +523,19 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
     for (local_fold, out_dir) in local_fold_runs:
         dp_wild, unp_wild = call_vienna_plfold(rec_wild.seq, ID, local_fold, local_L=local_L, local_W=local_W, global_L=global_L, out_dir=out_dir)
         create_circos_annotation(len(rec_wild), utr5_l, utr3_l, annot_locs, annot_names)
-        run_dot2circ(dp_wild, ID+'-WILD'+suffix, out_dir=out_dir)
+        run_dot2circ(dp_wild, ID+'-WILDTYPE'+suffix, out_dir=out_dir)
         
 
         dp_mut, unp_mut = call_vienna_plfold(rec_mut.seq, rec_mut.id, local_fold, local_L=local_L, local_W=local_W, global_L=global_L,out_dir=out_dir)
 
-        
+        snp_loc = None
         if len(SNP_tag) > 0 :
             matches =  re.match('(\D)(\d+)(\D)', SNP_tag)
             if not matches:
                 raise RuntimeError("No matches founs for tag:{}".format(SNP_tag)) 
-            wild_char, loc, mut_char = matches.group(1), int(matches.group(2)), matches.group(3)
+            wild_char, snp_loc, mut_char = matches.group(1), int(matches.group(2)), matches.group(3)
 
-            annot_locs += [loc]
+            annot_locs += [snp_loc]
             annot_names += [SNP_tag]
 
         create_circos_annotation(len(rec_mut), utr5_l, utr3_l, annot_locs, annot_names)
@@ -561,7 +565,7 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
 
         if ECGplot is True:
     #         plot_up_dict(u, None, title=ID, fig=myfig,tidy=True)
-            plot_unpaired_probs([(unp_wild, unp_mut)], plot_heatmap=False, out_dir=out_dir)
+            plot_unpaired_probs([(unp_wild, unp_mut)], plot_heatmap=False, out_dir=out_dir, mutation_pos=snp_loc)
             #plot_unpaired_probs([(unp_wild, unp_mut)], plot_heatmap=True, out_dir=out_dir)
 
 def get_mutation_rec(wild_rec, SNP_tag):
