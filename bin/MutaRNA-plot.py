@@ -210,7 +210,7 @@ def create_circos_annotation(CDS_len, utr5_len, utr3_len, snp_locs, snp_names, o
         start += utr3_len + 1 # Tocheck: maybe plus one not needed?
     if snp_locs is not None:
         for i in range(len(snp_locs)):
-            formatted_str += 'seq {} {} c.-{} fill_color=vdred,r0=1.03r,r1=1.03r+20p\n'.format(snp_locs[i], snp_locs[i]+1, snp_names[i])
+            formatted_str += 'seq {} {} c.-{} fill_color=vdred,r0=1.03r,r1=1.03r+20p\n'.format(snp_locs[i]-1, snp_locs[i], snp_names[i])
     # print (formatted_str)
     genes_file =  '{}/genes.formatted.txt'.format(out_dir)
     with open (genes_file, 'w') as genes_out:
