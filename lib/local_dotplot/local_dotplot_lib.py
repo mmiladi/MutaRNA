@@ -194,7 +194,7 @@ def my_heatmapMatshowSparse(mat, fig, ax, threshold=1e-3, inverse=True, interact
                origin='lower', zorder=1, interpolation='none')
 
 
-def my_heatmap(mat, fig, ax, title='', vmin=1e-2,vmax=1.0, inverse=True, interactive=False, gene_loc=None,colormap='hot'):
+def my_heatmap(mat, fig, ax, title='', vmin=1e-2,vmax=1.0, inverse=True, interactive=False, gene_loc=None,colormap='hot',mutation_pos=None):
 
     seq_len = mat.shape[0]
 
@@ -205,6 +205,10 @@ def my_heatmap(mat, fig, ax, title='', vmin=1e-2,vmax=1.0, inverse=True, interac
         ax.plot(np.arange(seq_len+1, -1), np.arange(seq_len+1, -1),  c='black')
     else:
         ax.plot(np.arange(-1, seq_len+1), np.arange(-1, seq_len+1), c='black')
+        if mutation_pos is not None:
+            ax.plot(np.arange(-1, seq_len+1), np.ones(seq_len+2)*(mutation_pos-1), c='red',linestyle='--', alpha=0.5)
+            ax.plot(np.ones(seq_len+2)*(mutation_pos-1), np.arange(-1, seq_len+1), c='red',linestyle='--', alpha=0.5)
+                
         if gene_loc is not None:
             print (gene_loc)
             assert len(gene_loc) == 2
@@ -212,6 +216,7 @@ def my_heatmap(mat, fig, ax, title='', vmin=1e-2,vmax=1.0, inverse=True, interac
             ax.plot(np.arange(gene_loc[0]-1, gene_loc[1]), np.arange(gene_loc[0]-1, gene_loc[1]), c='green', linewidth=2)
             ax.plot(np.ones(gene_loc[1]-gene_loc[0]+1)*(gene_loc[1]-1), np.arange(gene_loc[0]-1, gene_loc[1]), c='green', linewidth=1)
             ax.plot(np.arange(gene_loc[0]-1, gene_loc[1]), np.ones(gene_loc[1]-gene_loc[0]+1)*(gene_loc[0]-1),  c='green', linewidth=1)
+
 
     if inverse:
         cmap = plt.get_cmap(colormap+'_r')
@@ -231,8 +236,8 @@ def my_heatmap(mat, fig, ax, title='', vmin=1e-2,vmax=1.0, inverse=True, interac
 #     scatter = ax.scatter(x, y, c=mat, s=40, marker='s', edgecolor='none')
 #     fig.plugins = [plugins.PointLabelTooltip(scatter, None)]
 
-    ax.set_xticklabels([])
-    ax.set_yticklabels([])
+    # ax.set_xticklabels([])
+    # ax.set_yticklabels([])
     if colormap == 'hot':
         barticks = [vmin] + [r/10.0 for r in range(1, 11)]
         barlabels = [str(vmin)] + [str(r/10.0) for r in range(1, 11)]
@@ -252,22 +257,38 @@ def my_heatmap(mat, fig, ax, title='', vmin=1e-2,vmax=1.0, inverse=True, interac
     #     plt.colorbar(heatmap)
 
     ax.set_title(title)
-    ticks = np.arange(0, mat.shape[0], 10)
-    ax.set_xticks(ticks)
-    ax.set_yticks(ticks)
+    incrementticks = np.arange(0, mat.shape[0], 1)
+    ax.set_xticks(incrementticks)
+    ax.set_yticks(incrementticks)
 
-    ax.set_xticks(ticks-0.5, minor=True)
-    ax.set_yticks(ticks-0.5, minor=True)
+    ticks = np.arange(0, mat.shape[0], 10)
+    #ax.set_xticks(ticks-0.5, minor=True)
+    #ax.set_yticks(ticks-0.5, minor=True)
 #     ax.grid(True, which='minor',color='gray',linewidth=0.0001 )
     ax.grid(False, which='major')  # ,color='gray',linewidth=0.001 )
     #     ax.gca().patch.set_facecolor('0.8')
-    ax.tick_params(length=0,
-    axis='both',          # changes apply to the x-axis
-    which='major',      # both major and minor ticks are affected
-    bottom='off',      # ticks along the bottom edge are off
-    top='off',         # ticks along the top edge are off
-    labelbottom='off')
+    # ax.tick_params(length=0,
+    # axis='both',          # changes apply to the x-axis
+    # which='major',      # both major and minor ticks are affected
+    # bottom='off',      # ticks along the bottom edge are off
+    # top='off',         # ticks along the top edge are off
+    # labelbottom='off')
 
+    prune_labels = True
+    ticks_label_step = 10
+    if prune_labels == True:
+        labels = [item.get_text() for item in ax.get_xticklabels()]
+        labels_locs = ax.get_xticks()
+        pruned_labels = [str(loc)  if ((loc%ticks_label_step)==0 and loc!=0) else '' for loc, lab in zip(labels_locs, labels)]
+        ax.set_xticklabels(pruned_labels)
+        # ax.set_xticks = [l-0.5 for l in labels_locs]
+        
+        labels = [item.get_text() for item in ax.get_yticklabels()]
+        labels_locs = ax.get_yticks()
+        pruned_labels = [str(loc)  if ((loc%ticks_label_step)==0 and loc!=0) else '' for loc, lab in zip(labels_locs, labels)]
+        ax.set_yticklabels(pruned_labels)
+        # ax.set_yticks = [l-0.5 for l in labels_locs]
+        
     ax.set_xlim((-0.5, seq_len-0.5))
 #     ax.set_ylim((-0.5,seq_len-0.5))
     ax.set_ylim((seq_len-0.5, -0.5))
@@ -293,7 +314,7 @@ def plot_heat_maps_fig(fig, subplot_num, mfe_probs, bp_probs_whole, what='all', 
 
 def plot_heat_maps(mfe_probs, bp_probs_whole, filename='', what='all', inverse=False, 
                    interactive=False, gene_loc=None, title_suffix='',vmin=1e-2,vmax=1.0, out_dir='./',
-                   upper_triangle_txt='',lower_triangle_txt='',colormap='hot'):
+                   upper_triangle_txt='',lower_triangle_txt='',colormap='hot',mutation_pos=None):
     if what == 'all':
         fig = plt.figure(figsize=(20, 5))
         subplot_num = 140
@@ -303,16 +324,16 @@ def plot_heat_maps(mfe_probs, bp_probs_whole, filename='', what='all', inverse=F
 
     if what == 'basepairs' or what == 'all':
         my_heatmap(bp_probs_whole, fig, fig.add_subplot(subplot_num + 1), title_suffix
-                   , inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap)
+                   , inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap,mutation_pos=mutation_pos)
 
     if what == 'mfe-probs' or what == 'all':
         my_heatmap(mfe_probs, fig, fig.add_subplot(subplot_num + 3), 'mfe-probs:'+title_suffix,
-                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap)
+                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap,mutation_pos=mutation_pos)
     if what == 'all':
         my_heatmap(bp_probs_whole*mfe_probs, fig, fig.add_subplot(subplot_num + 2), 'bp*struct:'+title_suffix,
-                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap)
+                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap,mutation_pos=mutation_pos)
         my_heatmap(np.sqrt(bp_probs_whole*mfe_probs), fig, fig.add_subplot(subplot_num + 4), 'sqrt(bp*struct):'+title_suffix,
-                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap)
+                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap,mutation_pos=mutation_pos)
 
 
     fig.text(x=0.72,y=0.3,s=upper_triangle_txt, alpha=0.5)
