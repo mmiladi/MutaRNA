@@ -291,10 +291,10 @@ def plot_up_dict(up_dic, plot_lims=None, title='XX', fig=None, diff=False,tidy=F
         ticks_label_step = 50
         ticks_step = 10
 
-    minor_ticks = np.arange(min(x), max(x), 1)                                               
+    minor_ticks = np.arange(min(x), max(x), 10)                                               
     major_ticks = np.arange(min(x)-min(x)%ticks_step, max(x), ticks_step)                                               
 
-    ax.set_xticks(minor_ticks, minor=True)                                           
+    #ax.set_xticks(minor_ticks, minor=True)                                           
     ax.set_xticks(major_ticks) 
                 
 
@@ -310,11 +310,11 @@ def plot_up_dict(up_dic, plot_lims=None, title='XX', fig=None, diff=False,tidy=F
 #     ax.grid(which='both')                                                            
 
     # or if you want different settings for the grids:                               
-    ax.grid(which='minor', alpha=0.5)
+    ax.grid(which='major', axis='x', alpha=0.5)
     ax.axhline(0)
 
     if mutation_pos is not None:
-        ax.axvline(mutation_pos-0.5, color='r', alpha=0.5)        
+        ax.axvline(mutation_pos, color='r', alpha=0.3, linestyle='--')        
 #     ax.axhline(0, linestyle='--', color='k', alpha=0.5) # horizontal lines
 #     ax.axhline(1, linestyle='--', color='k', alpha=0.5) # horizontal lines
     
@@ -331,11 +331,11 @@ def plot_up_dict(up_dic, plot_lims=None, title='XX', fig=None, diff=False,tidy=F
 
 
     
-    if ticks_label_step != ticks_step:
-        labels = [item.get_text() for item in ax.get_xticklabels()]
-        labels_locs = ax.get_xticks()
-        pruned_labels = [str(loc)  if ((loc%ticks_label_step)==0 and loc!=0) else '' for loc, lab in zip(labels_locs, labels)]
-        ax.set_xticklabels(pruned_labels)
+    #if ticks_label_step != ticks_step:
+    labels = [item.get_text() for item in ax.get_xticklabels()]
+    labels_locs = ax.get_xticks()
+    pruned_labels = [str(loc)  if ((loc%ticks_label_step)==0 and loc!=0) else '' for loc, lab in zip(labels_locs, labels)]
+    ax.set_xticklabels(pruned_labels)
 
 
 
