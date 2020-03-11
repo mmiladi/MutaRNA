@@ -1,6 +1,5 @@
 # MutARNA: mutational analysis and visualization for short and long span interactions of RNAs
 
-
 ## Usage
 
 
