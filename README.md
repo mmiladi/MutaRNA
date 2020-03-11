@@ -1,6 +1,13 @@
 # MutARNA: mutational analysis and visualization for short and long span interactions of RNAs
 
 
+## Setup
+
+```
+conda env create -f conda-env-MutaRNA.yml -n MutaRNA
+source activate MutaRNA
+```
+
 ## Usage
 
 
@@ -9,7 +16,8 @@ usage: MutaRNA-plot.py [-h] --fasta-wildtype FASTA_WILDTYPE --SNP-tag SNP_TAG
                        [--out-dir OUT_DIR] [--no-global-fold]
                        [--no-local-fold] [--local-W LOCAL_W]
                        [--local-L LOCAL_L] [--global-maxL GLOBAL_MAXL]
-                       [--no-SNP-score]
+                       [--no-SNP-score] [--enable-long-range]
+                       [--enable-global-fold]
 
 MutaRNA-plot predict and plot local and global base-pair probabilities of
 wildtype and mutant RNAs Sample call: "python bin/MutaRNA-plot.py --fasta-
@@ -21,7 +29,8 @@ optional arguments:
                         Input sequence wildtype in fasta format
   --SNP-tag SNP_TAG     SNP tag e.g. "C3G" for mutation at position 3 from C
                         to G
-  --out-dir OUT_DIR     output directory
+  --out-dir OUT_DIR     path the output directory. The directory must already
+                        exist.
   --no-global-fold      Do not run (semi-)global fold (semi: max-window
                         1000nt)
   --no-local-fold       Do not run local fold
@@ -31,6 +40,9 @@ optional arguments:
                         Maximum interaction span of global length.
   --no-SNP-score        Do not run SNP structure abberation scores with RNAsnp
                         and remuRNA
+  --enable-long-range   predict and plot long-range interactions of wildtype
+                        and mutant RNAs using IntaRNA
+  --enable-global-fold  enable global fold
 
 ```
 
