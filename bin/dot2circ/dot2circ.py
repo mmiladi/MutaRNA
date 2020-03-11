@@ -100,7 +100,8 @@ import glob
 print(glob.glob(tmpdir+"/*/*"))
 
 # run circos
-circoscmd = '{0} {1} -outputdir {2} -param image/file**="{3}.png" -param image/radius*=1000p -param karyotype={4}/data/circos.karyotype.txt -param highlights/highlight/file={5}/genes.formatted.txt -param links/link/file={4}/data/circos.bplinks.txt -param plots/plot/file={4}/data/circos.sequence.txt '.format(
+# -param plots/plot/file={4}/data/circos.sequence.txt 
+circoscmd = '{0} {1} -outputdir {2} -param image/file**="{3}.png" -param image/radius*=1000p -param karyotype={4}/data/circos.karyotype.txt -param highlights/highlight/file={5}/genes.formatted.txt -param links/link/file={4}/data/circos.bplinks.txt '.format(
     PERLBIN,
     CIRCOSBIN,
     args.outputdir,

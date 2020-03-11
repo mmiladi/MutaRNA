@@ -187,7 +187,7 @@ def run_dot2circ(dp_file, prefix, out_dir=""):
         raise RuntimeError("Error in calling dot2circ.py: {} {}\n".format(out.decode('utf-8'), err.decode('utf-8')))
 
     
-def create_circos_annotation(CDS_len, utr5_len, utr3_len, snp_locs, snp_names, out_dir, CDS_label='RNA'):
+def create_circos_annotation(CDS_len, utr5_len, utr3_len, snp_locs, snp_names, out_dir, CDS_label="RNA"):
     '''
     Genes formatted Example:
     seq 193 759 CDS fill_color=green,r0=1.01r,r1=1.01r+20p
@@ -201,9 +201,9 @@ def create_circos_annotation(CDS_len, utr5_len, utr3_len, snp_locs, snp_names, o
     if utr5_len is not None:
         formatted_str += 'seq {} {} 5` fill_color=yellow,r0=1.01r,r1=1.01r+20p\n'.format(start, start+utr5_len)
         start += utr5_len + 1 # Tocheck: maybe plus one not needed?
-    if CDS_len is not None:
+    if CDS_len is not None and CDS_label is not None:
         
-        formatted_str += 'seq {} {} {} fill_color=green,r0=1.01r,r1=1.01r+20p\n'.format(start, start+CDS_len,  CDS_label)
+        formatted_str += 'seq {} {} {} fill_color=green,r0=1.01r,r1=1.01r+20p\n'.format(start-1, start+CDS_len,  CDS_label)
         start += CDS_len + 1 # Tocheck: maybe plus one not needed?
     if utr3_len is not None:
         formatted_str += 'seq {} {} 3` fill_color=blue,r0=1.01r,r1=1.01r+20p\n'.format(start, start+utr3_len)
