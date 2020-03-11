@@ -257,38 +257,46 @@ def my_heatmap(mat, fig, ax, title='', vmin=1e-2,vmax=1.0, inverse=True, interac
     #     plt.colorbar(heatmap)
 
     ax.set_title(title)
-    incrementticks = np.arange(0, mat.shape[0], 1)
+    incrementticks = np.arange(0, mat.shape[0], 10)-1
     ax.set_xticks(incrementticks)
     ax.set_yticks(incrementticks)
 
-    ticks = np.arange(0, mat.shape[0], 10)
-    #ax.set_xticks(ticks-0.5, minor=True)
-    #ax.set_yticks(ticks-0.5, minor=True)
-#     ax.grid(True, which='minor',color='gray',linewidth=0.0001 )
-    ax.grid(False, which='major')  # ,color='gray',linewidth=0.001 )
-    #     ax.gca().patch.set_facecolor('0.8')
-    # ax.tick_params(length=0,
-    # axis='both',          # changes apply to the x-axis
-    # which='major',      # both major and minor ticks are affected
-    # bottom='off',      # ticks along the bottom edge are off
-    # top='off',         # ticks along the top edge are off
-    # labelbottom='off')
 
+    ticks = np.arange(0, mat.shape[0], 50)-1
+    ax.set_xticks(ticks, minor=True)
+    ax.set_yticks(ticks, minor=True)
+    ax.grid(True, which='minor' ,color='gray',linewidth=0.05,alpha=0.3 )
+
+#    ax.grid(True, which='minor',color='gray',linewidth=0.0001 )
+    #     ax.gca().patch.set_facecolor('0.8')
+    
     prune_labels = True
     ticks_label_step = 10
+    if  seq_len > 101:
+        ticks_label_step = 50
     if prune_labels == True:
         labels = [item.get_text() for item in ax.get_xticklabels()]
         labels_locs = ax.get_xticks()
-        pruned_labels = [str(loc)  if ((loc%ticks_label_step)==0 and loc!=0) else '' for loc, lab in zip(labels_locs, labels)]
+        pruned_labels = [str(int(loc+1))  if (((loc+1)%ticks_label_step)==0 and (loc+0.5)!=0) else '' for loc, lab in zip(labels_locs, labels)]
         ax.set_xticklabels(pruned_labels)
         # ax.set_xticks = [l-0.5 for l in labels_locs]
         
         labels = [item.get_text() for item in ax.get_yticklabels()]
         labels_locs = ax.get_yticks()
-        pruned_labels = [str(loc)  if ((loc%ticks_label_step)==0 and loc!=0) else '' for loc, lab in zip(labels_locs, labels)]
+        pruned_labels = [str(int(loc+1))  if (((loc+1)%ticks_label_step)==0 and (loc+0.5)!=0) else '' for loc, lab in zip(labels_locs, labels)]
         ax.set_yticklabels(pruned_labels)
         # ax.set_yticks = [l-0.5 for l in labels_locs]
         
+    ax.tick_params(#length=0,
+     axis='both',          # changes apply to the x-axis
+     which='major',      # both major and minor ticks are affected
+     bottom=True,      # ticks along the bottom edge are off
+    top=True,         # ticks along the top edge are off
+    right=True,
+    labelbottom=True,
+    labeltop=False,
+    )
+
     ax.set_xlim((-0.5, seq_len-0.5))
 #     ax.set_ylim((-0.5,seq_len-0.5))
     ax.set_ylim((seq_len-0.5, -0.5))
