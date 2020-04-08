@@ -119,8 +119,16 @@ def write_diff_dp(dp_wild, dp_mut, out_dp):
 
     write_dp_from_matrix(diff_mat, out_dp=dp_introduced, 
                          template_dp=dp_wild,p_range=[-1.0,0])
-    return out_dp, dp_removed, dp_introduced 
+    return out_dp, dp_removed, dp_introduced, diff_mat 
     
+
+def get_impact_range(mat_diff, min_p = 0.01):
+    mat_filt = (mat_diff >= min_p) + (mat_diff <= -min_p) #np.clip(np.abs(mat_diff), a_min = min_p, a_max = 1.0)
+    i1, i2 = np.nonzero(mat_filt)
+    min_max = [min(np.min(i1), np.min(i2))-1, max(np.max(i1), np.max(i2))+1]
+    print("min_max is ", min_max)
+
+    return min_max
 
 
 
@@ -507,6 +515,7 @@ def plot_unpaired_probs(up_file_pairs, plot_heatmap=False,rang=None,
             fig.savefig(os.path.join(out_dir, os.path.basename(up_file_wild).replace('WT','WTMUT')+'-{}-u{}.svg'.format(title_key, ulen)), bbox_inches='tight', #pad_inches=0.5,
                         )
 
+
 def plot_circos_seq_SNP(rec_wild, SNP_tag, rec_mut, do_local=True,do_global=False, plotted_seq_lenght=None,
 dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_out_dir='./', local_L=150, local_W=200, global_L=1000, ulens=[1,3,5,7]):
     
@@ -545,7 +554,8 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
         create_circos_annotation(len(rec_mut), utr5_l, utr3_l, annot_locs, annot_names,out_dir=out_dir)
         run_dot2circ(dp_mut, rec_mut.id+suffix, out_dir=out_dir)
         dp_diff = dp_mut.replace('.ps', '_diff.ps')
-        dpabs, dpremove, dpintroduce = write_diff_dp(dp_wild, dp_mut, dp_diff)
+        dpabs, dpremove, dpintroduce, mat_diff = write_diff_dp(dp_wild, dp_mut, dp_diff)
+        cutout_min_max = get_impact_range(mat_diff)
 
         #run_dot2circ(dp_diff, rec_mut.id+suffix+'-diff', out_dir=out_dir)
         run_dot2circ(dpremove, rec_mut.id+suffix+'-weakened', out_dir=out_dir)
@@ -557,15 +567,27 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
 
             ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild)-ldp.parse_dp_ps(dp_mut), colormap='seismic', vmin=-1.0, vmax=1.0,
                                 filename=ID+'-DIFF',title_suffix=ID+'\n'+r'$\Delta = P({\rm WT})-P({\rm mutant})$', what='basepairs',inverse=True, out_dir=out_dir, mutation_pos=snp_loc)
+
+            ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild)-ldp.parse_dp_ps(dp_mut), colormap='seismic', vmin=-1.0, vmax=1.0,
+                                filename=ID+'-DIFF-cut',title_suffix=ID+'\n'+r'$\Delta = P({\rm WT})-P({\rm mutant})$', what='basepairs',inverse=True, out_dir=out_dir, mutation_pos=snp_loc,
+                                cutout_min_max=cutout_min_max)
+
             #ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_diff), filename=ID+'-ABSDIFF',title_suffix=ID+'-ABSDIFF', what='basepairs',inverse=True, out_dir=out_dir)
             #ldp.plot_heat_maps(None, ldp.parse_dp_ps(dpremove), filename=ID+'-REMOVED', title_suffix=ID+'-REMOVED', what='basepairs',inverse=True, out_dir=out_dir)
             #ldp.plot_heat_maps(None, ldp.parse_dp_ps(dpintroduce), filename=ID+'-INTRODUCED', title_suffix=ID+'-INTRODUCED', what='basepairs',inverse=True, out_dir=out_dir)
             
+
             ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild)+ldp.parse_dp_ps(dp_mut).transpose(), filename=ID+'-WT-MUT', what='basepairs',
                     inverse=True, interactive=False, gene_loc=None,title_suffix=ID+'-'+SNP_tag+'\n'r'$P({\rm WT})$, $P({\rm mutant})$', out_dir=out_dir, upper_triangle_txt='WT',lower_triangle_txt='MUT', mutation_pos=snp_loc)
-            
+            ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild)+ldp.parse_dp_ps(dp_mut).transpose(), filename=ID+'-WT-MUT-cut', what='basepairs',
+                    inverse=True, interactive=False, gene_loc=None,title_suffix=ID+'-'+SNP_tag+'\n'r'$P({\rm WT})$, $P({\rm mutant})$', out_dir=out_dir, upper_triangle_txt='WT',lower_triangle_txt='MUT', mutation_pos=snp_loc,
+                    cutout_min_max=cutout_min_max)
+
             ldp.plot_heat_maps(None, ldp.parse_dp_ps(dpremove)+ldp.parse_dp_ps(dpintroduce).transpose(), filename=ID+'-REMOVED-INTRODUCED', what='basepairs',
                     inverse=True, interactive=False, gene_loc=None,title_suffix=ID+'\n'+r'$|\Delta| = |P({\rm WT})-P({\rm mutant})|$', out_dir=out_dir, upper_triangle_txt='weakened\n' + r'    $\Delta>0$',lower_triangle_txt='increased\n' + r'    $\Delta<0$', mutation_pos=snp_loc)
+            ldp.plot_heat_maps(None, ldp.parse_dp_ps(dpremove)+ldp.parse_dp_ps(dpintroduce).transpose(), filename=ID+'-REMOVED-INTRODUCED-cut', what='basepairs',
+                    inverse=True, interactive=False, gene_loc=None,title_suffix=ID+'\n'+r'$|\Delta| = |P({\rm WT})-P({\rm mutant})|$', out_dir=out_dir, upper_triangle_txt='weakened\n' + r'    $\Delta>0$',lower_triangle_txt='increased\n' + r'    $\Delta<0$', mutation_pos=snp_loc,
+                    cutout_min_max=cutout_min_max)
 
         if ECGplot is True:
     #         plot_up_dict(u, None, title=ID, fig=myfig,tidy=True)
