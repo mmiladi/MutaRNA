@@ -124,7 +124,7 @@ def write_diff_dp(dp_wild, dp_mut, out_dp):
 
 
 
-def call_vienna_plfold(sequence, seq_name, do_localfold=False, local_W=200, local_L=150, global_L=1000, out_dir='./'):
+def call_vienna_plfold(sequence, seq_name, do_localfold=False, local_W=200, local_L=150, global_L=1000, plfold_u = 20, out_dir='./'):
     '''Runs Vienna RNAfold with partition function for all sequences inside input fasta file 
     # call_RNAfold_pf("ACCGGCUUAAAGG", "seq1")'''
 
@@ -146,7 +146,7 @@ def call_vienna_plfold(sequence, seq_name, do_localfold=False, local_W=200, loca
         f.write('>{}\n{}\n'.format(seq_name, sequence)) 
 
     # RNAFOLD = 'RNAfold -p2 '
-    RNAPLFOLD = 'RNAplfold -W {} -L {} -u 1 < {}'.format(local_W, local_L, tmpfile.name)  # -u 1 for unpaired probablitiy 
+    RNAPLFOLD = 'RNAplfold -W {} -L {} -u {} < {}'.format(local_W, local_L, plfold_u, tmpfile.name)  # -u 1 for unpaired probablitiy 
     assert len(sequence.split()) == 1
     cmd = "cd {}; ".format(out_dir)
     # cmd += ('echo ">%s\\n%s\\n" | '%(seq_name, sequence))  
@@ -241,8 +241,8 @@ from cycler import cycler
 
 
 
-def get_unpaired_probs(unp_file):
-    # Read Vienna RNAplfold unpaired prob file (-u 1) into dict
+def get_unpaired_probs(unp_file, ulen = 1):
+    # Read Vienna RNAplfold unpaired prob file (-u >= ulen) into dict
     with open(unp_file) as unp_in:
         line1 = unp_in.readline()
         if "#unpaired probabilities" not in line1:
@@ -253,16 +253,18 @@ def get_unpaired_probs(unp_file):
         up_dic = dict()
         for line in unp_in:
             splits = line.split()
-            assert len(splits) >= 2
+            assert len(splits) >= 1 + ulen
             pos = int(splits[0])
-            up_prob = float(splits[1])
+            up_prob = float(splits[ulen]) if splits[ulen]!='NA' else -1
             assert pos >=1
-            assert up_prob >= 0 and up_prob <= 1
+            assert (up_prob >= 0 and up_prob <= 1) or up_prob == -1
             assert pos not in up_dic
-            up_dic[pos] = up_prob
+            if up_prob != -1:
+                up_dic[pos-(ulen-1)/2] = up_prob
             
     #print('Parsed ', unp_file)
     return up_dic
+
 
 
 def plot_up_dict(up_dic, plot_lims=None, title='XX', fig=None, diff=False,tidy=False,mutation_pos=None):
@@ -436,7 +438,7 @@ def heatmap_up_dict(up_dic, plot_lims=None, title='XX', ax=None,fig=None, diff=F
 
 
 def plot_unpaired_probs(up_file_pairs, plot_heatmap=False,rang=None, 
-    out_dir='./',ECGs_together=True, dynamic_width_ecg=True, mutation_pos=None):
+    out_dir='./',ECGs_together=True, dynamic_width_ecg=True, mutation_pos=None, ulens=[1, 3, 5, 7]):
     plt.rc('axes', #prop_cycle=(cycler('color', ['k',(0.8901960784313725, 0.10196078431372549, 0.10980392156862745)]
             prop_cycle=(cycler('color', sns.color_palette('colorblind', 3))))
             
@@ -449,63 +451,64 @@ def plot_unpaired_probs(up_file_pairs, plot_heatmap=False,rang=None,
             #   ))
 
    
-    for up_file_wild, up_file_mut in up_file_pairs:
-        # print (up_file_wild, up_file_mut)
-        d_wild = get_unpaired_probs(up_file_wild)
-        d_mut = get_unpaired_probs(up_file_mut)
-        dict_diff = {f:(d_wild[f] - d_mut[f])  for f in d_wild}
-        seq_len = len(d_wild)
-        if dynamic_width_ecg:
-            fig_width = 5 + 2*int(seq_len/100)
-        else:
-            fig_width = 12
-
-        if plot_heatmap:
-            title_key = 'heatband'
-            fig, ax = plt.subplots(1,figsize=(0.5, 11))
-            #heatmap_up_dict(dict_diff, rang, title=os.path.basename(up_file_wild).replace('-WT-','-').replace('_lunp','-DIFF'), ax=ax, fig=fig,diff=True)
-        else:
-            title_key = 'ECG'
-
-            if ECGs_together:
-                fig = plt.figure(figsize=(fig_width, 3))
+    for ulen in ulens:
+        for up_file_wild, up_file_mut in up_file_pairs:
+            # print (up_file_wild, up_file_mut)
+            d_wild = get_unpaired_probs(up_file_wild, ulen=ulen)
+            d_mut = get_unpaired_probs(up_file_mut, ulen=ulen)
+            dict_diff = {f:(d_wild[f] - d_mut[f])  for f in d_wild}
+            seq_len = len(d_wild)
+            if dynamic_width_ecg:
+                fig_width = 5 + 2*int(seq_len/100)
             else:
-                fig = plt.figure(figsize=(fig_width, 2))
-            plot_up_dict(dict_diff, rang, title='Accessibility(wt) - Accessibility(mut)' #os.path.basename(up_file_wild).replace('-WT-','-').replace('_lunp','-DIFF')
-                         , fig=fig, diff=True,tidy=True,mutation_pos=mutation_pos)
-        fig.savefig(os.path.join(out_dir, os.path.basename(up_file_wild)+'-diff-{}.png'.format(title_key)), bbox_inches='tight', pad_inches=0.2
-                   )
-        fig.savefig(os.path.join(out_dir, os.path.basename(up_file_wild)+'-diff-{}.svg'.format(title_key)), bbox_inches='tight', pad_inches=0.2
-                   )
-        
-        if plot_heatmap:
-            fig = plt.figure(figsize=(2.5, 11),tight_layout={'w_pad':2})
+                fig_width = 12
 
-        elif not ECGs_together:
-            fig = plt.figure(figsize=(fig_width, 1))
-        labeldic = {1:True, 0:False}
-        titledic = {0:'mut', 1:'wt'}
-        
-        for iup, up_file in enumerate([up_file_mut, up_file_wild]):
             if plot_heatmap:
-                ax = fig.add_subplot(131+iup*2) # Skip one ax in dirty way for cbar
-                heatmap_up_dict(get_unpaired_probs(up_file), rang, title=os.path.basename(up_file).replace('-MUT-','-').replace('-WT-','-').replace('_lunp',''), 
-                                fig=fig,ax=ax,ticklabel=labeldic[iup])            
+                title_key = 'heatband'
+                fig, ax = plt.subplots(1,figsize=(0.5, 11))
+                #heatmap_up_dict(dict_diff, rang, title=os.path.basename(up_file_wild).replace('-WT-','-').replace('_lunp','-DIFF'), ax=ax, fig=fig,diff=True)
             else:
-                plot_up_dict(get_unpaired_probs(up_file), rang, title='Accessibility({})'.format(titledic[iup]),#os.path.basename(up_file).replace('-MUT-','-').replace('-WT-','-').replace('_lunp',''), 
-                             fig=fig,tidy=False,diff=ECGs_together,mutation_pos=mutation_pos
-#                              ax=ax, ticklabel=labeldic[iup]
-                            )            
-            
-#         fig.tight_layout(pad=0.1)
+                title_key = 'ECG'
 
-        fig.savefig(os.path.join(out_dir, os.path.basename(up_file_wild).replace('WT','WTMUT')+'-{}.png'.format(title_key)), bbox_inches='tight', #pad_inches=0.5,
-                    dpi=600)
-        fig.savefig(os.path.join(out_dir, os.path.basename(up_file_wild).replace('WT','WTMUT')+'-{}.svg'.format(title_key)), bbox_inches='tight', #pad_inches=0.5,
-                    )
+                if ECGs_together:
+                    fig = plt.figure(figsize=(fig_width, 3))
+                else:
+                    fig = plt.figure(figsize=(fig_width, 2))
+                plot_up_dict(dict_diff, rang, title='Accessibility(wt) - Accessibility(mut)' #os.path.basename(up_file_wild).replace('-WT-','-').replace('_lunp','-DIFF')
+                             , fig=fig, diff=True,tidy=True,mutation_pos=mutation_pos)
+            fig.savefig(os.path.join(out_dir, os.path.basename(up_file_wild)+'-diff-{}-u{}.png'.format(title_key, ulen)), bbox_inches='tight', pad_inches=0.2
+                       )
+            fig.savefig(os.path.join(out_dir, os.path.basename(up_file_wild)+'u{}'.format(ulen)+'-diff-{}-u{}.svg'.format(title_key, ulen)), bbox_inches='tight', pad_inches=0.2
+                       )
+            
+            if plot_heatmap:
+                fig = plt.figure(figsize=(2.5, 11),tight_layout={'w_pad':2})
+
+            elif not ECGs_together:
+                fig = plt.figure(figsize=(fig_width, 1))
+            labeldic = {1:True, 0:False}
+            titledic = {0:'mut', 1:'wt'}
+            
+            for iup, up_file in enumerate([up_file_mut, up_file_wild]):
+                if plot_heatmap:
+                    ax = fig.add_subplot(131+iup*2) # Skip one ax in dirty way for cbar
+                    heatmap_up_dict(get_unpaired_probs(up_file, ulen=ulen), rang, title=os.path.basename(up_file).replace('-MUT-','-').replace('-WT-','-').replace('_lunp',''), 
+                                    fig=fig,ax=ax,ticklabel=labeldic[iup])            
+                else:
+                    plot_up_dict(get_unpaired_probs(up_file, ulen=ulen), rang, title='Accessibility({})'.format(titledic[iup]),#os.path.basename(up_file).replace('-MUT-','-').replace('-WT-','-').replace('_lunp',''), 
+                                 fig=fig,tidy=False,diff=ECGs_together,mutation_pos=mutation_pos
+    #                              ax=ax, ticklabel=labeldic[iup]
+                                )            
+                
+    #         fig.tight_layout(pad=0.1)
+
+            fig.savefig(os.path.join(out_dir, os.path.basename(up_file_wild).replace('WT','WTMUT')+'-{}-u{}.png'.format(title_key, ulen)), bbox_inches='tight', #pad_inches=0.5,
+                        dpi=600)
+            fig.savefig(os.path.join(out_dir, os.path.basename(up_file_wild).replace('WT','WTMUT')+'-{}-u{}.svg'.format(title_key, ulen)), bbox_inches='tight', #pad_inches=0.5,
+                        )
 
 def plot_circos_seq_SNP(rec_wild, SNP_tag, rec_mut, do_local=True,do_global=False, plotted_seq_lenght=None,
-dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_out_dir='./', local_L=150, local_W=200, global_L=1000):
+dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_out_dir='./', local_L=150, local_W=200, global_L=1000, ulens=[1,3,5,7]):
     
     ID = '_'.join(rec_wild.id.split('|')[:2]) # +'_'+SNP_tag#"".join(x for x in rec_wild.id if x not in ['|','<', '>'])
     utr5_l, utr3_l = 0, 0 
@@ -566,7 +569,7 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
 
         if ECGplot is True:
     #         plot_up_dict(u, None, title=ID, fig=myfig,tidy=True)
-            plot_unpaired_probs([(unp_wild, unp_mut)], plot_heatmap=False, out_dir=out_dir, mutation_pos=snp_loc)
+            plot_unpaired_probs([(unp_wild, unp_mut)], plot_heatmap=False, out_dir=out_dir, mutation_pos=snp_loc, ulens=ulens)
             #plot_unpaired_probs([(unp_wild, unp_mut)], plot_heatmap=True, out_dir=out_dir)
 
 def get_mutation_rec(wild_rec, SNP_tag):
@@ -643,7 +646,7 @@ def get_SNV_scores(fasta_wt, SNP_tag, out_dir='./'):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='MutaRNA-plot predict and plot local and global base-pair probabilities of wildtype and mutant RNAs'\
-        '\nSample call: \"python bin/MutaRNA-plot.py --fasta-wildtype data/sample0.fa --SNP-tag G3C --out-dir tmp --no-global-fold\"'
+        '\nSample call: \"python bin/MutaRNA-plot.py --fasta-wildtype data/sample0.fa --SNP-tag G3C --out-dir tmp --no-global-fold  --plfold-u "5,10,20" \"'
         )
     
     parser.add_argument('--fasta-wildtype', required=True, type=is_valid_file, help='Input sequence wildtype in fasta format')
@@ -655,6 +658,7 @@ if __name__ == '__main__':
     parser.add_argument('--no-local-fold', action='store_true', help='Do not run local fold')
     parser.add_argument('--local-W',  default=200, type=int, help='Window length for local fold')
     parser.add_argument('--local-L',  default=150, type=int, help='Max base-pair interaction span for local fold')
+    parser.add_argument('--plfold-u',  default="1,3,5,7", type=str, help='RNAplfold unpaired lengths to plot (max 20), comma-separated')
     parser.add_argument('--global-maxL',  default=1000, type=int, help='Maximum interaction span of global length.')
     parser.add_argument('--no-SNP-score', action='store_true', help='Do not run SNP structure abberation scores with RNAsnp and remuRNA')
     parser.add_argument('--enable-long-range', action='store_true', help='predict and plot long-range interactions of wildtype and mutant RNAs using IntaRNA')
@@ -690,9 +694,17 @@ if __name__ == '__main__':
         print ("Note: global and local outputs would be the same, since sequence length is shorter than bp-interaction lengnth. ")
         #raise RuntimeError ("Wildtype and mutant sequences have unequal lengths. wild:{} != mutant:{}".format(len(rec_mutant), len(args.sequence_wild)))
 
+    
+    ulen_matches =  re.match('^(\d+)(,\d+)*$', args.plfold_u.strip())
+    if not ulen_matches:
+        raise RuntimeError("Invalid --plfold-u len argument")
+ 
+    plfold_ulens = [int(u) for u in args.plfold_u.strip().split(',')]
+    
+
    
     plot_circos_seq_SNP(rec_wild, SNP_tag, rec_mut=rec_mutant, do_local=not args.no_local_fold, do_global=(not args.no_global_fold) and (args.enable_global_fold), 
-    local_global_out_dir=args.out_dir, local_L=args.local_L, local_W=args.local_W, global_L=args.global_maxL)
+    local_global_out_dir=args.out_dir, local_L=args.local_L, local_W=args.local_W, global_L=args.global_maxL, ulens=plfold_ulens)
     
     if not args.no_SNP_score:
         get_SNV_scores(args.fasta_wildtype, SNP_tag, out_dir=args.out_dir)
