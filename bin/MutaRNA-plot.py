@@ -606,18 +606,25 @@ def get_SNV_scores(fasta_wt, SNP_tag, out_dir='./'):
     df_remuRNA['tool'] = 'remuRNA'
     df_remuRNA = filter_SNV_columns(df_remuRNA, ['SNP','H(wt||mu)', 'MFE(mu)', 'MFE(wt)', 'dMFE'])
 
-    df_RNAsnp1 = snv_wrapper.run_RNAsnp(fasta_wt, [SNP_tag], window=None, plfold_W=None, plfold_L=None, mode=1)
+    df_RNAsnp1, warn_RNAsnp1, err_RNAsnp1 = snv_wrapper.run_RNAsnp(fasta_wt, [SNP_tag], window=None, plfold_W=None, plfold_L=None, mode=1)
     df_RNAsnp1['tool'] = 'RNAsnp'
     df_RNAsnp1 = filter_SNV_columns(df_RNAsnp1, ['SNP','interval', 'd_max', 'p-value']).rename(columns={'d_max':'distance', 'rnasnp_params':'params'})
 
-    df_RNAsnp2 = snv_wrapper.run_RNAsnp(fasta_wt, [SNP_tag], window=None, plfold_W=None, plfold_L=None, mode=2)
+    df_RNAsnp2, warn_RNAsnp2, err_RNAsnp2 = snv_wrapper.run_RNAsnp(fasta_wt, [SNP_tag], window=None, plfold_W=None, plfold_L=None, mode=2)
     df_RNAsnp2['tool'] = 'RNAsnp'
     df_RNAsnp2 = filter_SNV_columns(df_RNAsnp2, ['SNP', 'interval', 'd',  'p-value']).rename(columns={'d':'distance', 'rnasnp_params':'params'})
 
 
     df_RNAsnp12 = pd.concat([df_RNAsnp1, df_RNAsnp2], sort=True)
     
-  
+    
+    with open(os.path.join(out_dir,'RNAsnp_mode1.warn'),'w') as warn1, open(os.path.join(out_dir,'RNAsnp_mode1.err'),'w') as err1:
+        warn1.write(warn_RNAsnp1)
+        err1.write(err_RNAsnp1)
+
+    with open(os.path.join(out_dir,'RNAsnp_mode2.warn'),'w') as warn2, open(os.path.join(out_dir,'RNAsnp_mode2.err'),'w') as err2:
+        warn2.write(warn_RNAsnp2)
+        err2.write(err_RNAsnp2)
     
     csv_remuRNA = os.path.join(out_dir, 'remuRNA.csv')
     csv_RNAsnp1 = os.path.join(out_dir, 'RNAsnp_mode1.csv')
