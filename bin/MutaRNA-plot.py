@@ -486,7 +486,7 @@ def plot_unpaired_probs(up_file_pairs, plot_heatmap=False,rang=None,
                              , fig=fig, diff=True,tidy=True,mutation_pos=mutation_pos)
             fig.savefig(os.path.join(out_dir, os.path.basename(up_file_wild)+'-diff-{}-u{}.png'.format(title_key, ulen)), bbox_inches='tight', pad_inches=0.2
                        )
-            fig.savefig(os.path.join(out_dir, os.path.basename(up_file_wild)+'u{}'.format(ulen)+'-diff-{}-u{}.svg'.format(title_key, ulen)), bbox_inches='tight', pad_inches=0.2
+            fig.savefig(os.path.join(out_dir, os.path.basename(up_file_wild)+'-diff-{}-u{}.svg'.format(title_key, ulen)), bbox_inches='tight', pad_inches=0.2
                        )
             
             if plot_heatmap:
