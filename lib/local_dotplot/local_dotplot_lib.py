@@ -206,8 +206,9 @@ def my_heatmap(mat, fig, ax, title='', vmin=1e-2,vmax=1.0, inverse=True, interac
     else:
         ax.plot(np.arange(-1, seq_len+1), np.arange(-1, seq_len+1), c='black')
         if mutation_pos is not None:
-            ax.plot(np.arange(-1, seq_len+1), np.ones(seq_len+2)*(mutation_pos-1), c='red',linestyle='--', alpha=0.5)
-            ax.plot(np.ones(seq_len+2)*(mutation_pos-1), np.arange(-1, seq_len+1), c='red',linestyle='--', alpha=0.5)
+            for mutation_spos in mutation_pos:
+                ax.plot(np.arange(-1, seq_len+1), np.ones(seq_len+2)*(mutation_spos-1), c='red',linestyle='--', alpha=0.5)
+                ax.plot(np.ones(seq_len+2)*(mutation_spos-1), np.arange(-1, seq_len+1), c='red',linestyle='--', alpha=0.5)
                 
         if gene_loc is not None:
             print (gene_loc)

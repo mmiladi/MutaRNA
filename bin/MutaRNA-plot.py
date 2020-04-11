@@ -326,7 +326,8 @@ def plot_up_dict(up_dic, plot_lims=None, title='XX', fig=None, diff=False,tidy=F
     ax.axhline(0)
 
     if mutation_pos is not None:
-        ax.axvline(mutation_pos, color='r', alpha=0.3, linestyle='--')        
+        for mutation_spos in mutation_pos:
+            ax.axvline(mutation_spos, color='r', alpha=0.3, linestyle='--')        
 #     ax.axhline(0, linestyle='--', color='k', alpha=0.5) # horizontal lines
 #     ax.axhline(1, linestyle='--', color='k', alpha=0.5) # horizontal lines
     
@@ -543,7 +544,7 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
 
         dp_mut, unp_mut = call_vienna_plfold(rec_mut.seq, rec_mut.id, local_fold, local_L=local_L, local_W=local_W, global_L=global_L,out_dir=out_dir, plfold_u=max(ulens))
 
-        snp_loc = None
+        snp_locs = []
         if len(SNP_tag) > 0 :
             for sSNP_tag in SNP_tag.split('-'):
                 matches =  re.match('(\D)(\d+)(\D)', sSNP_tag)
@@ -551,6 +552,7 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
                     raise RuntimeError("No matches founs for tag:{}".format(sSNP_tag)) 
                 wild_char, snp_loc, mut_char = matches.group(1), int(matches.group(2)), matches.group(3)
 
+                snp_locs += [snp_loc]
                 annot_locs += [snp_loc]
                 annot_names += [sSNP_tag]
 
@@ -569,10 +571,10 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
             #ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_mut), filename=ID+'-MUTANT', title_suffix=ID+'\n'+r'$P({\rm mutant})$''\n'+r'$P({\rm wt})$''-MUTANT', what='basepairs',inverse=True, out_dir=out_dir)
 
             ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild)-ldp.parse_dp_ps(dp_mut), colormap='seismic', vmin=-1.0, vmax=1.0,
-                                filename=ID+'-DIFF',title_suffix=ID+'\n'+r'$\Delta = P({\rm WT})-P({\rm mutant})$', what='basepairs',inverse=True, out_dir=out_dir, mutation_pos=snp_loc)
+                                filename=ID+'-DIFF',title_suffix=ID+'\n'+r'$\Delta = P({\rm WT})-P({\rm mutant})$', what='basepairs',inverse=True, out_dir=out_dir, mutation_pos=snp_locs)
 
             ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild)-ldp.parse_dp_ps(dp_mut), colormap='seismic', vmin=-1.0, vmax=1.0,
-                                filename=ID+'-DIFF-cut',title_suffix=ID+'\n'+r'$\Delta = P({\rm WT})-P({\rm mutant})$', what='basepairs',inverse=True, out_dir=out_dir, mutation_pos=snp_loc,
+                                filename=ID+'-DIFF-cut',title_suffix=ID+'\n'+r'$\Delta = P({\rm WT})-P({\rm mutant})$', what='basepairs',inverse=True, out_dir=out_dir, mutation_pos=snp_locs,
                                 cutout_min_max=cutout_min_max)
 
             #ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_diff), filename=ID+'-ABSDIFF',title_suffix=ID+'-ABSDIFF', what='basepairs',inverse=True, out_dir=out_dir)
@@ -581,20 +583,20 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
             
 
             ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild)+ldp.parse_dp_ps(dp_mut).transpose(), filename=ID+'-WT-MUT', what='basepairs',
-                    inverse=True, interactive=False, gene_loc=None,title_suffix=ID+'-'+SNP_tag+'\n'r'$P({\rm WT})$, $P({\rm mutant})$', out_dir=out_dir, upper_triangle_txt='WT',lower_triangle_txt='MUT', mutation_pos=snp_loc)
+                    inverse=True, interactive=False, gene_loc=None,title_suffix=ID+'-'+SNP_tag+'\n'r'$P({\rm WT})$, $P({\rm mutant})$', out_dir=out_dir, upper_triangle_txt='WT',lower_triangle_txt='MUT', mutation_pos=snp_locs)
             ldp.plot_heat_maps(None, ldp.parse_dp_ps(dp_wild)+ldp.parse_dp_ps(dp_mut).transpose(), filename=ID+'-WT-MUT-cut', what='basepairs',
-                    inverse=True, interactive=False, gene_loc=None,title_suffix=ID+'-'+SNP_tag+'\n'r'$P({\rm WT})$, $P({\rm mutant})$', out_dir=out_dir, upper_triangle_txt='WT',lower_triangle_txt='MUT', mutation_pos=snp_loc,
+                    inverse=True, interactive=False, gene_loc=None,title_suffix=ID+'-'+SNP_tag+'\n'r'$P({\rm WT})$, $P({\rm mutant})$', out_dir=out_dir, upper_triangle_txt='WT',lower_triangle_txt='MUT', mutation_pos=snp_locs,
                     cutout_min_max=cutout_min_max)
 
             ldp.plot_heat_maps(None, ldp.parse_dp_ps(dpremove)+ldp.parse_dp_ps(dpintroduce).transpose(), filename=ID+'-REMOVED-INTRODUCED', what='basepairs',
-                    inverse=True, interactive=False, gene_loc=None,title_suffix=ID+'\n'+r'$|\Delta| = |P({\rm WT})-P({\rm mutant})|$', out_dir=out_dir, upper_triangle_txt='weakened\n' + r'    $\Delta>0$',lower_triangle_txt='increased\n' + r'    $\Delta<0$', mutation_pos=snp_loc)
+                    inverse=True, interactive=False, gene_loc=None,title_suffix=ID+'\n'+r'$|\Delta| = |P({\rm WT})-P({\rm mutant})|$', out_dir=out_dir, upper_triangle_txt='weakened\n' + r'    $\Delta>0$',lower_triangle_txt='increased\n' + r'    $\Delta<0$', mutation_pos=snp_locs)
             ldp.plot_heat_maps(None, ldp.parse_dp_ps(dpremove)+ldp.parse_dp_ps(dpintroduce).transpose(), filename=ID+'-REMOVED-INTRODUCED-cut', what='basepairs',
-                    inverse=True, interactive=False, gene_loc=None,title_suffix=ID+'\n'+r'$|\Delta| = |P({\rm WT})-P({\rm mutant})|$', out_dir=out_dir, upper_triangle_txt='weakened\n' + r'    $\Delta>0$',lower_triangle_txt='increased\n' + r'    $\Delta<0$', mutation_pos=snp_loc,
+                    inverse=True, interactive=False, gene_loc=None,title_suffix=ID+'\n'+r'$|\Delta| = |P({\rm WT})-P({\rm mutant})|$', out_dir=out_dir, upper_triangle_txt='weakened\n' + r'    $\Delta>0$',lower_triangle_txt='increased\n' + r'    $\Delta<0$', mutation_pos=snp_locs,
                     cutout_min_max=cutout_min_max)
 
         if ECGplot is True:
     #         plot_up_dict(u, None, title=ID, fig=myfig,tidy=True)
-            plot_unpaired_probs([(unp_wild, unp_mut)], plot_heatmap=False, out_dir=out_dir, mutation_pos=snp_loc, ulens=ulens)
+            plot_unpaired_probs([(unp_wild, unp_mut)], plot_heatmap=False, out_dir=out_dir, mutation_pos=snp_locs, ulens=ulens)
             #plot_unpaired_probs([(unp_wild, unp_mut)], plot_heatmap=True, out_dir=out_dir)
 
 def get_mutation_rec(wild_rec, multi_SNP_tags):
