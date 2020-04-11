@@ -545,13 +545,14 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
 
         snp_loc = None
         if len(SNP_tag) > 0 :
-            matches =  re.match('(\D)(\d+)(\D)', SNP_tag)
-            if not matches:
-                raise RuntimeError("No matches founs for tag:{}".format(SNP_tag)) 
-            wild_char, snp_loc, mut_char = matches.group(1), int(matches.group(2)), matches.group(3)
+            for sSNP_tag in SNP_tag.split('-'):
+                matches =  re.match('(\D)(\d+)(\D)', sSNP_tag)
+                if not matches:
+                    raise RuntimeError("No matches founs for tag:{}".format(sSNP_tag)) 
+                wild_char, snp_loc, mut_char = matches.group(1), int(matches.group(2)), matches.group(3)
 
-            annot_locs += [snp_loc]
-            annot_names += [SNP_tag]
+                annot_locs += [snp_loc]
+                annot_names += [sSNP_tag]
 
         create_circos_annotation(len(rec_mut), utr5_l, utr3_l, annot_locs, annot_names,out_dir=out_dir)
         run_dot2circ(dp_mut, rec_mut.id+suffix, out_dir=out_dir)
