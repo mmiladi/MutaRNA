@@ -517,7 +517,7 @@ def plot_unpaired_probs(up_file_pairs, plot_heatmap=False,rang=None,
 
 
 def plot_circos_seq_SNP(rec_wild, SNP_tag, rec_mut, do_local=True,do_global=False, plotted_seq_lenght=None,
-dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_out_dir='./', local_L=150, local_W=200, global_L=1000, ulens=[1,3,5,7]):
+dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_out_dir='./', local_L=150, local_W=200, global_L=1000, ulens=[1,3,5,7], cut_min_p=0.01):
     
     ID = '_'.join(rec_wild.id.split('|')[:2]) # +'_'+SNP_tag#"".join(x for x in rec_wild.id if x not in ['|','<', '>'])
     utr5_l, utr3_l = 0, 0 
@@ -555,7 +555,7 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
         run_dot2circ(dp_mut, rec_mut.id+suffix, out_dir=out_dir)
         dp_diff = dp_mut.replace('.ps', '_diff.ps')
         dpabs, dpremove, dpintroduce, mat_diff = write_diff_dp(dp_wild, dp_mut, dp_diff)
-        cutout_min_max = get_impact_range(mat_diff)
+        cutout_min_max = get_impact_range(mat_diff, cut_min_p)
 
         #run_dot2circ(dp_diff, rec_mut.id+suffix+'-diff', out_dir=out_dir)
         run_dot2circ(dpremove, rec_mut.id+suffix+'-weakened', out_dir=out_dir)
@@ -680,6 +680,7 @@ if __name__ == '__main__':
     parser.add_argument('--no-local-fold', action='store_true', help='Do not run local fold')
     parser.add_argument('--local-W',  default=200, type=int, help='Window length for local fold')
     parser.add_argument('--local-L',  default=150, type=int, help='Max base-pair interaction span for local fold')
+    parser.add_argument('--cutout-min-prob',  default=0.1, type=float, help='Only the region is shown in the cutout dotplot with basepairs for min probability.')
     parser.add_argument('--plfold-u',  default="1,3,5,7", type=str, help='RNAplfold unpaired lengths to plot (max 20), comma-separated')
     parser.add_argument('--global-maxL',  default=1000, type=int, help='Maximum interaction span of global length.')
     parser.add_argument('--no-SNP-score', action='store_true', help='Do not run SNP structure abberation scores with RNAsnp and remuRNA')
@@ -726,7 +727,7 @@ if __name__ == '__main__':
 
    
     plot_circos_seq_SNP(rec_wild, SNP_tag, rec_mut=rec_mutant, do_local=not args.no_local_fold, do_global=(not args.no_global_fold) and (args.enable_global_fold), 
-    local_global_out_dir=args.out_dir, local_L=args.local_L, local_W=args.local_W, global_L=args.global_maxL, ulens=plfold_ulens)
+    local_global_out_dir=args.out_dir, local_L=args.local_L, local_W=args.local_W, global_L=args.global_maxL, ulens=plfold_ulens, cut_min_p=args.cutout_min_prob)
     
     if not args.no_SNP_score:
         get_SNV_scores(args.fasta_wildtype, SNP_tag, out_dir=args.out_dir)
