@@ -32,13 +32,15 @@ from Bio import Alphabet
 from subprocess import Popen, PIPE
 from os.path import isfile
 
-def is_valid_SNP(SNP_tag):
-    SNP_tag = SNP_tag.strip()
-    matches =  re.match('^(\D)(\d+)(\D)$', SNP_tag)
-    
-    if not matches:
-        raise RuntimeError("Invalid SNP tag: \"{}\". A valid SNP tag example: G200C".format(SNP_tag))
-    return SNP_tag
+def is_valid_SNP(multi_SNP_tags):
+    multi_SNP_tags = multi_SNP_tags.strip()
+    #matches =  re.match('^(\D)(\d+)(\D)$', SNP_tag)
+    multi_matches =  re.match('(\D\d+\D)(-\D\d+\D)*', multi_SNP_tags)
+
+    if not multi_matches:
+        raise RuntimeError("Invalid SNP tag: \"{}\". A valid SNP tag example: G200C or G200C-A202U".format(multi_SNP_tags))
+    return multi_SNP_tags
+
 
 def is_valid_file(file_name):
     if os.path.isfile(file_name):
@@ -594,23 +596,30 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
             plot_unpaired_probs([(unp_wild, unp_mut)], plot_heatmap=False, out_dir=out_dir, mutation_pos=snp_loc, ulens=ulens)
             #plot_unpaired_probs([(unp_wild, unp_mut)], plot_heatmap=True, out_dir=out_dir)
 
-def get_mutation_rec(wild_rec, SNP_tag):
+def get_mutation_rec(wild_rec, multi_SNP_tags):
     wild_seq = wild_rec.seq
-    matches =  re.match('(\D)(\d+)(\D)', SNP_tag)
-    if not matches:
-        raise RuntimeError("No matches founs for tag:{}".format(SNP_tag)) 
-    wild_char, loc, mut_char = matches.group(1), int(matches.group(2)), matches.group(3)
-    if len(wild_seq) < loc:
-        raise RuntimeError("SNP loc outside sequence len:{}".format(SNP_tag)) 
+    mut_seq = wild_seq
+    multi_matches =  re.match('(\D\d+\D)(-\D\d+\D)*', multi_SNP_tags)
+    if not multi_matches:
+        raise RuntimeError("No matches found for multi-tag:{}".format(multi_SNP_tags)) 
 
-    if (wild_seq[loc-1].upper() != wild_char.upper()):
-        print("WARNING!: SNP {} wild char expected: {}, but found non-matching:{} on wildtype sequences".format(SNP_tag, wild_char, wild_seq[loc-1]))
+    is_multi_SNP = len(multi_SNP_tags.split('-')) > 1
+    for SNP_tag in multi_SNP_tags.split('-'):
+        matches =  re.match('(\D)(\d+)(\D)', SNP_tag)
+        if not matches:
+            raise RuntimeError("No matches found for tag:{}".format(SNP_tag)) 
+        wild_char, loc, mut_char = matches.group(1), int(matches.group(2)), matches.group(3)
+        if len(wild_seq) < loc:
+            raise RuntimeError("SNP loc outside sequence len:{}".format(SNP_tag)) 
 
-    mut_seq = wild_seq[:loc-1] + mut_char + wild_seq[loc:]
+        if (wild_seq[loc-1].upper() != wild_char.upper()):
+            print("WARNING!: SNP {} wild char expected: {}, but found non-matching:{} on wildtype sequences".format(SNP_tag, wild_char, wild_seq[loc-1]))
+
+        mut_seq = mut_seq[:loc-1] + mut_char + mut_seq[loc:]
     
     #print mut_seq
     rec_mut = SeqRecord(mut_seq, id=wild_rec.id + '-MUTANT')
-    return rec_mut
+    return rec_mut, is_multi_SNP
 
 def filter_SNV_columns(df, clean_columns=None, select_not_filter=True):
     if (select_not_filter is True) and (clean_columns is not None):
@@ -627,7 +636,7 @@ def filter_SNV_columns(df, clean_columns=None, select_not_filter=True):
 
 def get_SNV_scores(fasta_wt, SNP_tag, out_dir='./'):
 
-    df_remuRNA = snv_wrapper.run_remuRNA(fasta_wt, [SNP_tag], window=None)
+    df_remuRNA = snv_wrapper.run_remuRNA(fasta_wt, SNP_tag.split('-'), window=None)
     df_remuRNA['tool'] = 'remuRNA'
     df_remuRNA = filter_SNV_columns(df_remuRNA, ['SNP','H(wt||mu)', 'MFE(mu)', 'MFE(wt)', 'dMFE'])
 
@@ -706,7 +715,7 @@ if __name__ == '__main__':
         raise RuntimeError("Exactly one of these options must be passed (--sequence-mutant, --SNP-tag) but both are provided.")
     
     if args.sequence_mutant is None:
-        rec_mutant = get_mutation_rec(rec_wild, args.SNP_tag)
+        rec_mutant, is_multi_SNP = get_mutation_rec(rec_wild, args.SNP_tag)
         SNP_tag = args.SNP_tag
     else:
         rec_mutant = args.sequence_mutant
