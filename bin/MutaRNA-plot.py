@@ -534,12 +534,12 @@ dotplot=True,ECGplot=True,suffix='',annot_locs=[], annot_names=[],local_global_o
         local_fold_runs   += [(False,gdir)] 
 
     for (local_fold, out_dir) in local_fold_runs:
-        dp_wild, unp_wild = call_vienna_plfold(rec_wild.seq, ID, local_fold, local_L=local_L, local_W=local_W, global_L=global_L, out_dir=out_dir)
+        dp_wild, unp_wild = call_vienna_plfold(rec_wild.seq, ID, local_fold, local_L=local_L, local_W=local_W, global_L=global_L, out_dir=out_dir, plfold_u=max(ulens))
         genes_format_file =create_circos_annotation(len(rec_wild), utr5_l, utr3_l, annot_locs, annot_names,out_dir=out_dir)
         run_dot2circ(dp_wild, ID+'-WILDTYPE'+suffix, out_dir=out_dir)
         
 
-        dp_mut, unp_mut = call_vienna_plfold(rec_mut.seq, rec_mut.id, local_fold, local_L=local_L, local_W=local_W, global_L=global_L,out_dir=out_dir)
+        dp_mut, unp_mut = call_vienna_plfold(rec_mut.seq, rec_mut.id, local_fold, local_L=local_L, local_W=local_W, global_L=global_L,out_dir=out_dir, plfold_u=max(ulens))
 
         snp_loc = None
         if len(SNP_tag) > 0 :
@@ -681,7 +681,7 @@ if __name__ == '__main__':
     parser.add_argument('--local-W',  default=200, type=int, help='Window length for local fold')
     parser.add_argument('--local-L',  default=150, type=int, help='Max base-pair interaction span for local fold')
     parser.add_argument('--cutout-min-prob',  default=0.1, type=float, help='Only the region is shown in the cutout dotplot with basepairs for min probability.')
-    parser.add_argument('--plfold-u',  default="1,3,5,7", type=str, help='RNAplfold unpaired lengths to plot (max 20), comma-separated')
+    parser.add_argument('--plfold-u',  default="1,3,5,7", type=str, help='RNAplfold unpaired lengths to plot, comma-separated')
     parser.add_argument('--global-maxL',  default=1000, type=int, help='Maximum interaction span of global length.')
     parser.add_argument('--no-SNP-score', action='store_true', help='Do not run SNP structure abberation scores with RNAsnp and remuRNA')
     parser.add_argument('--enable-long-range', action='store_true', help='predict and plot long-range interactions of wildtype and mutant RNAs using IntaRNA')
