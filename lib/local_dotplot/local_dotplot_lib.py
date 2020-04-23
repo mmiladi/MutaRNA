@@ -194,7 +194,7 @@ def my_heatmapMatshowSparse(mat, fig, ax, threshold=1e-3, inverse=True, interact
                origin='lower', zorder=1, interpolation='none')
 
 
-def my_heatmap(mat, fig, ax, title='', vmin=1e-2,vmax=1.0, inverse=True, interactive=False, gene_loc=None,colormap='hot',mutation_pos=None):
+def my_heatmap(mat, fig, ax, title='', vmin=1e-2,vmax=1.0, inverse=True, interactive=False, gene_loc=None,colormap='hot',mutation_pos=None,cutout_min_max=[None,None]):
 
     seq_len = mat.shape[0]
 
@@ -206,8 +206,9 @@ def my_heatmap(mat, fig, ax, title='', vmin=1e-2,vmax=1.0, inverse=True, interac
     else:
         ax.plot(np.arange(-1, seq_len+1), np.arange(-1, seq_len+1), c='black')
         if mutation_pos is not None:
-            ax.plot(np.arange(-1, seq_len+1), np.ones(seq_len+2)*(mutation_pos-1), c='red',linestyle='--', alpha=0.5)
-            ax.plot(np.ones(seq_len+2)*(mutation_pos-1), np.arange(-1, seq_len+1), c='red',linestyle='--', alpha=0.5)
+            for mutation_spos in mutation_pos:
+                ax.plot(np.arange(-1, seq_len+1), np.ones(seq_len+2)*(mutation_spos-1), c='red',linestyle='--', alpha=0.5)
+                ax.plot(np.ones(seq_len+2)*(mutation_spos-1), np.arange(-1, seq_len+1), c='red',linestyle='--', alpha=0.5)
                 
         if gene_loc is not None:
             print (gene_loc)
@@ -297,32 +298,39 @@ def my_heatmap(mat, fig, ax, title='', vmin=1e-2,vmax=1.0, inverse=True, interac
     labeltop=False,
     )
 
-    ax.set_xlim((-0.5, seq_len-0.5))
+    min_pos, max_pos = cutout_min_max
+    if min_pos is None:
+        min_pos = 0
+    min_pos = max(0, min_pos)
+    if max_pos is None:
+        max_pos = seq_len
+    max_pos = min(seq_len, max_pos)
+    ax.set_xlim((-0.5+min_pos, max_pos-0.5))
 #     ax.set_ylim((-0.5,seq_len-0.5))
-    ax.set_ylim((seq_len-0.5, -0.5))
+    ax.set_ylim((max_pos-0.5, -0.5+min_pos))
 
 
 def plot_heat_maps_fig(fig, subplot_num, mfe_probs, bp_probs_whole, what='all', inverse=False,
-                   interactive=False, gene_loc=None, title_suffix='',vmin=1e-2,vmax=1.0, colormap='hot'):
+                   interactive=False, gene_loc=None, title_suffix='',vmin=1e-2,vmax=1.0, colormap='hot', cutout_min_max=[None, None]):
 
     if what == 'basepairs' or what == 'all':
         my_heatmap(bp_probs_whole, fig, fig.add_subplot(subplot_num + 1), title_suffix
-                   , inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap)
+                   , inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap,cutout_min_max=cutout_min_max)
 
     if what == 'mfe-probs' or what == 'all':
         my_heatmap(mfe_probs, fig, fig.add_subplot(subplot_num + 3), 'mfe:'+title_suffix,
-                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap)
+                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap,cutout_min_max=cutout_min_max)
     if what == 'all':
         my_heatmap(bp_probs_whole*mfe_probs, fig, fig.add_subplot(subplot_num + 2), 'bp*struct:'+title_suffix,
-                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap)
+                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap,cutout_min_max=cutout_min_max)
         my_heatmap(np.sqrt(bp_probs_whole*mfe_probs), fig, fig.add_subplot(subplot_num + 4), 'sqrt(bp*struct):'+title_suffix,
-                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap)
+                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap,cutout_min_max=cutout_min_max)
 
     #     fig.savefig(filename+'.png', dpi=800)
 
 def plot_heat_maps(mfe_probs, bp_probs_whole, filename='', what='all', inverse=False, 
                    interactive=False, gene_loc=None, title_suffix='',vmin=1e-2,vmax=1.0, out_dir='./',
-                   upper_triangle_txt='',lower_triangle_txt='',colormap='hot',mutation_pos=None):
+                   upper_triangle_txt='',lower_triangle_txt='',colormap='hot',mutation_pos=None,cutout_min_max=[None,None]):
     if what == 'all':
         fig = plt.figure(figsize=(20, 5))
         subplot_num = 140
@@ -332,16 +340,16 @@ def plot_heat_maps(mfe_probs, bp_probs_whole, filename='', what='all', inverse=F
 
     if what == 'basepairs' or what == 'all':
         my_heatmap(bp_probs_whole, fig, fig.add_subplot(subplot_num + 1), title_suffix
-                   , inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap,mutation_pos=mutation_pos)
+                   , inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap,mutation_pos=mutation_pos,cutout_min_max=cutout_min_max)
 
     if what == 'mfe-probs' or what == 'all':
         my_heatmap(mfe_probs, fig, fig.add_subplot(subplot_num + 3), 'mfe-probs:'+title_suffix,
-                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap,mutation_pos=mutation_pos)
+                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap,mutation_pos=mutation_pos,cutout_min_max=cutout_min_max)
     if what == 'all':
         my_heatmap(bp_probs_whole*mfe_probs, fig, fig.add_subplot(subplot_num + 2), 'bp*struct:'+title_suffix,
-                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap,mutation_pos=mutation_pos)
+                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap,mutation_pos=mutation_pos,cutout_min_max=cutout_min_max)
         my_heatmap(np.sqrt(bp_probs_whole*mfe_probs), fig, fig.add_subplot(subplot_num + 4), 'sqrt(bp*struct):'+title_suffix,
-                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap,mutation_pos=mutation_pos)
+                   inverse=inverse, interactive=interactive, gene_loc=gene_loc,vmin=vmin,vmax=vmax,colormap=colormap,mutation_pos=mutation_pos,cutout_min_max=cutout_min_max)
 
 
     fig.text(x=0.72,y=0.3,s=upper_triangle_txt, alpha=0.5)

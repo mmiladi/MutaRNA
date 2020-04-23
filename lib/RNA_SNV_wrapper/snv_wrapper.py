@@ -136,7 +136,7 @@ def run_remuRNA(wild_fa, snp_tags, window=None):
         Pandas table of standard output
 
     """
-    assert(len(snp_tags) == 1)
+    # assert(len(snp_tags) == 1)
     if not os.path.isfile(wild_fa):
         raise RuntimeError("Input fasta %s does not exist" % in_fasta_file)
 
@@ -155,12 +155,12 @@ def run_remuRNA(wild_fa, snp_tags, window=None):
     if window is not None:
         params += '-w={}'.format(int(window))
     cmd += params
-    # print cmd
+    print (cmd)
     p = Popen(cmd , stdin=PIPE, shell=True, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate()
     if err:
         print("Error in calling remuRNA\n{}\n{}\n".format(out, err))
-        df = pd.DataFrame({'SNP':{0:snp_tags[0]}, 'error':{0:'True:{}'.format(err.decode('utf-8'))}, })
+        df = pd.DataFrame({'SNP':{0:snp_tag[0]}, 'error':{0:'True:{}'.format(err.decode('utf-8'))}, })
     else:
         df = pd.read_table(StringIO(out.decode("utf-8")))
     df['remurna_params'] = params
@@ -228,14 +228,19 @@ def run_RNAsnp(wild_fa, snp_tags, window=None, plfold_W=None, plfold_L=None,  mo
     # os.remove(snp_file.name)
     print(params)
     out_cleaned = ""
+    error_text = ""
+    warn_text = ""
+
     for line in out.decode('utf-8').split('\n'):
         line = line.strip()
         if len(line)==0:
             continue
         if 'error' in line.lower():
             print("RNASNP returned error for: {} message is:{}".format(wild_fa, line))
+            error_text += line+"\n"
         elif 'warning' in line.lower():
             print("ERROR: RNASNP returned warning for: {} message is:{}".format(wild_fa, line))
+            warn_text += line+"\n"
         else:
             out_cleaned += line+"\n"
     if len(out_cleaned) != 0:
@@ -244,7 +249,7 @@ def run_RNAsnp(wild_fa, snp_tags, window=None, plfold_W=None, plfold_L=None,  mo
     else:
         df_RNAsnp = pd.DataFrame({'SNP':{0:snp_tags[0]}, 'error':{0:'True:{}'.format(err.decode('utf-8'))}, })
     df_RNAsnp['rnasnp_params'] = params + param_string
-    return  df_RNAsnp #.add_suffix('RNAsnp:')
+    return  df_RNAsnp, warn_text, error_text #.add_suffix('RNAsnp:')
     #return out_cleaned
 
 
