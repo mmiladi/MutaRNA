@@ -90,8 +90,6 @@ if (outMode=="pdf") {
   labs(col="Pr(bp)",x="sequence position (nt)",y="") +
   annotate("text", x=1:seqLength,y= -1, label=unlist(strsplit(seq,"")),size=1.5)
 )
-seqChar = unlist(strsplit(seq,""))
-for( i in 1)
 
 # close output file
 dev.off()
