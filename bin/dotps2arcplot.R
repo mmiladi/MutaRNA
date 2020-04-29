@@ -51,7 +51,7 @@ if (!file.exists(psFile)) {
 FileInput = readLines(psFile) 
 
 # parse sequence
-seq = gsub("\\\\","",paste(unlist(FileInput[grep("^[acgutnACGUTN\\\\\\s]+$",FileInput)]),sep=""))
+seq = gsub("\\\\","",paste(FileInput[grep("^[acgutnACGUTN\\\\\\s]+$",FileInput)],collapse=""))
 seqLength = str_length(seq)
 
 # parse base pair probabilities
