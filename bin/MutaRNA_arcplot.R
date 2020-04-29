@@ -68,7 +68,7 @@ if (!file.exists(psFile)) {
 FileInput = readLines(psFile) 
 
 # parse sequence
-seq = gsub("\\\\","",paste(unlist(FileInput[grep("^[acgutnACGUTN\\\\\\s]+$",FileInput)]),sep=""))
+seq = gsub("\\\\","",paste(FileInput[grep("^[acgutnACGUTN\\\\\\s]+$",FileInput)],collapse=""))
 
 # parse base pair probabilities
 bpProb = data.frame(lapply(data.frame(matrix((unlist(lapply(FileInput[grep("^(\\d+.+ubox)$",FileInput)],strsplit, " "))),ncol=4,byrow = T)[,1:3], stringsAsFactors=F), as.numeric))
