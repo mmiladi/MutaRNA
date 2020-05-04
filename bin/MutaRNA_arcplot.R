@@ -109,13 +109,14 @@ theme_update(axis.title.y=element_blank(),
 
 plotWidth = seqLength/100*6
 plotHeight = (max(dW$bpProb$r)+max(dM$bpProb$r))/100*4
+plotRes = min( 300, floor(32500/plotWidth) )
 
 ########## full length bp prob  #################
 
 if (outMode=="pdf") {
   pdf(outFile, width= plotWidth, height = plotHeight)
 } else if (outMode=="png") {
-  png(outFile, units="in", res=300, width= plotWidth, height = plotHeight)
+  png(outFile, units="in", res=plotRes, width= plotWidth, height = plotHeight)
 } else if (outMode=="svg") {
   svg(outFile, bg="white", width= plotWidth, height = plotHeight)
 }
@@ -147,7 +148,7 @@ dev0 = dev.off()
 if (outMode=="pdf") {
   pdf(str_replace(outFile,".[pP][dD][fF]$",".diff.pdf"), width= plotWidth, height = plotHeight)
 } else if (outMode=="png") {
-  png(str_replace(outFile,".[pP][nN][gG]$",".diff.png"), units="in", res=300, width= plotWidth, height = plotHeight)
+  png(str_replace(outFile,".[pP][nN][gG]$",".diff.png"), units="in", res=plotRes, width= plotWidth, height = plotHeight)
 } else if (outMode=="svg") {
   svg(str_replace(outFile,".[sS][vV][gG]$",".diff.svg"), bg="white", width= plotWidth, height = plotHeight)
 }
@@ -180,7 +181,7 @@ dev0 = dev.off()
 if (outMode=="pdf") {
   pdf(str_replace(outFile,".[pP][dD][fF]$",".diff-cut.pdf"), width= plotWidth, height = plotHeight)
 } else if (outMode=="png") {
-  png(str_replace(outFile,".[pP][nN][gG]$",".diff-cut.png"), units="in", res=300, width= plotWidth, height = plotHeight)
+  png(str_replace(outFile,".[pP][nN][gG]$",".diff-cut.png"), units="in", res=plotRes, width= plotWidth, height = plotHeight)
 } else if (outMode=="svg") {
   svg(str_replace(outFile,".[sS][vV][gG]$",".diff-cut.svg"), bg="white", width= plotWidth, height = plotHeight)
 }
