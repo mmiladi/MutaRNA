@@ -74,7 +74,9 @@ theme_update(axis.title.y=element_blank(),
 if (outMode=="pdf") {
   pdf(outFile, width= seqLength/100*6, height = max(bpProb$r)/100*5)
 } else if (outMode=="png") {
-  png(outFile, units="in", res=300, width= seqLength/100*6, height = max(bpProb$r)/100*5)
+  plotWidth<- seqLength/100*6
+  plotRes <- min( 300, floor(32500/plotWidth) )
+  png(outFile, units="in", res=plotRes, width=plotWidth, height = max(bpProb$r)/100*5)
 } else if (outMode=="svg") {
   svg(outFile, bg="white", width= seqLength/100*6, height = max(bpProb$r)/100*5)
 }
