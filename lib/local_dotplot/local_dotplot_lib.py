@@ -286,6 +286,7 @@ def my_heatmap(mat, fig, ax, title='', vmin=1e-2,vmax=1.0, inverse=True, interac
    
     prune_labels = True
     ticks_label_step = 10
+    
     if  effective_seq_len > 101:
         ticks_label_step = 50
     if prune_labels == True:
