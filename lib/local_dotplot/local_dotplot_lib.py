@@ -271,9 +271,22 @@ def my_heatmap(mat, fig, ax, title='', vmin=1e-2,vmax=1.0, inverse=True, interac
 #    ax.grid(True, which='minor',color='gray',linewidth=0.0001 )
     #     ax.gca().patch.set_facecolor('0.8')
     
+    ## Cut and zoom to the range
+    min_pos, max_pos = cutout_min_max
+    if min_pos is None:
+        min_pos = 0
+    min_pos = max(0, min_pos)
+    if max_pos is None:
+        max_pos = seq_len
+    max_pos = min(seq_len, max_pos)
+    ax.set_xlim((-0.5+min_pos, max_pos-0.5))
+#     ax.set_ylim((-0.5,seq_len-0.5))
+    ax.set_ylim((max_pos-0.5, -0.5+min_pos))
+    effective_seq_len = max_pos - min_pos + 1
+   
     prune_labels = True
     ticks_label_step = 10
-    if  seq_len > 101:
+    if  effective_seq_len > 101:
         ticks_label_step = 50
     if prune_labels == True:
         labels = [item.get_text() for item in ax.get_xticklabels()]
@@ -298,17 +311,7 @@ def my_heatmap(mat, fig, ax, title='', vmin=1e-2,vmax=1.0, inverse=True, interac
     labeltop=False,
     )
 
-    min_pos, max_pos = cutout_min_max
-    if min_pos is None:
-        min_pos = 0
-    min_pos = max(0, min_pos)
-    if max_pos is None:
-        max_pos = seq_len
-    max_pos = min(seq_len, max_pos)
-    ax.set_xlim((-0.5+min_pos, max_pos-0.5))
-#     ax.set_ylim((-0.5,seq_len-0.5))
-    ax.set_ylim((max_pos-0.5, -0.5+min_pos))
-
+ 
 
 def plot_heat_maps_fig(fig, subplot_num, mfe_probs, bp_probs_whole, what='all', inverse=False,
                    interactive=False, gene_loc=None, title_suffix='',vmin=1e-2,vmax=1.0, colormap='hot', cutout_min_max=[None, None]):
