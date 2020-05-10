@@ -268,9 +268,10 @@ def my_heatmap(mat, fig, ax, title='', vmin=1e-2,vmax=1.0, inverse=True, interac
     ax.set_yticks(ticks, minor=True)
     ax.grid(True, which='minor' ,color='gray',linewidth=0.05,alpha=0.3 )
 
-#    ax.grid(True, which='minor',color='gray',linewidth=0.0001 )
+    #    ax.grid(True, which='minor',color='gray',linewidth=0.0001 )
     #     ax.gca().patch.set_facecolor('0.8')
     
+    ## Updated Code
     ## Cut and zoom to the range
     min_pos, max_pos = cutout_min_max
     if min_pos is None:
@@ -286,7 +287,7 @@ def my_heatmap(mat, fig, ax, title='', vmin=1e-2,vmax=1.0, inverse=True, interac
    
     prune_labels = True
     ticks_label_step = 10
-    
+
     if  effective_seq_len > 101:
         ticks_label_step = 50
     if prune_labels == True:
