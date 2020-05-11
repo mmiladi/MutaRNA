@@ -129,7 +129,6 @@ def get_impact_range(mat_diff, min_p = 0.01):
     
     min_p_steps = [min_p * r for r in  [1, 0.5, 0.1, 0.05, 0.01, 0.005, 0.001, 0]]
     
-    print("mat_diff", mat_diff)
     for min_p_s in min_p_steps:
         mat_filt = (mat_diff >= min_p_s) + (mat_diff <= -min_p_s) #np.clip(np.abs(mat_diff), a_min = min_p, a_max = 1.0)
         i1, i2 = np.nonzero(mat_filt)
