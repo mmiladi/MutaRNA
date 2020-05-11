@@ -124,11 +124,11 @@ def write_diff_dp(dp_wild, dp_mut, out_dp):
     return out_dp, dp_removed, dp_introduced, diff_mat 
     
 
+
 def get_impact_range(mat_diff, min_p = 0.01):
     
     min_p_steps = [min_p * r for r in  [1, 0.5, 0.1, 0.05, 0.01, 0.005, 0.001, 0]]
     
-    print("mat_diff", mat_diff)
     for min_p_s in min_p_steps:
         mat_filt = (mat_diff >= min_p_s) + (mat_diff <= -min_p_s) #np.clip(np.abs(mat_diff), a_min = min_p, a_max = 1.0)
         i1, i2 = np.nonzero(mat_filt)
@@ -136,6 +136,7 @@ def get_impact_range(mat_diff, min_p = 0.01):
             print("Filter impact range at min_p:", min_p_s)
             break
     
+    ### Updated iterative code
     min_max = [min(np.min(i1), np.min(i2))-1, max(np.max(i1), np.max(i2))+1]
     print("Impact range min max is:", min_max)
 

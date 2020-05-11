@@ -263,14 +263,16 @@ def my_heatmap(mat, fig, ax, title='', vmin=1e-2,vmax=1.0, inverse=True, interac
     ax.set_yticks(incrementticks)
 
 
-    ticks = np.arange(0, mat.shape[0], 50)-1
+    ticks = np.arange(0, mat.shape[0], 50)-0.95
     ax.set_xticks(ticks, minor=True)
     ax.set_yticks(ticks, minor=True)
-    ax.grid(True, which='minor' ,color='gray',linewidth=0.05,alpha=0.3 )
+    ax.grid(True, which='minor' ,color='gray',linewidth=0.1,alpha=0.3 )
 
-#    ax.grid(True, which='minor',color='gray',linewidth=0.0001 )
+    
+    #    ax.grid(True, which='minor',color='gray',linewidth=0.0001 )
     #     ax.gca().patch.set_facecolor('0.8')
     
+    ## Updated Code
     ## Cut and zoom to the range
     min_pos, max_pos = cutout_min_max
     if min_pos is None:
@@ -283,12 +285,14 @@ def my_heatmap(mat, fig, ax, title='', vmin=1e-2,vmax=1.0, inverse=True, interac
 #     ax.set_ylim((-0.5,seq_len-0.5))
     ax.set_ylim((max_pos-0.5, -0.5+min_pos))
     effective_seq_len = max_pos - min_pos + 1
-   
     prune_labels = True
     ticks_label_step = 10
-    
+
     if  effective_seq_len > 101:
         ticks_label_step = 50
+    if  effective_seq_len > 1001:
+        ticks_label_step = 100
+
     if prune_labels == True:
         labels = [item.get_text() for item in ax.get_xticklabels()]
         labels_locs = ax.get_xticks()
@@ -309,8 +313,21 @@ def my_heatmap(mat, fig, ax, title='', vmin=1e-2,vmax=1.0, inverse=True, interac
     top=True,         # ticks along the top edge are off
     right=True,
     labelbottom=True,
-    labeltop=False,
+    labeltop=False    
     )
+
+    ax.tick_params(#length=0,
+     axis='both',          # changes apply to the x-axis
+     which='minor',      # both major and minor ticks are affected
+    width=1.4,
+    length=4,
+     bottom=True,      # ticks along the bottom edge are off
+    top=True,         # ticks along the top edge are off
+    right=True,
+    grid_visible=True
+    )
+    ax.tick_params(axis='x', rotation=-90)
+
 
  
 
