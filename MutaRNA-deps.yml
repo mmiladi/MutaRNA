@@ -1,0 +1,37 @@
+name: MutaRNA-deps
+
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+
+dependencies:
+
+## MutaRNA_arcplot.R
+#  - r-stringr
+#  - r-ggplot2
+#  - r-ggforce
+#  - r-ggthemes
+## installed via install.packages() in running R
+
+###########################################
+#
+## MutaRNA-plot.py
+  - python>=3
+  # biopython below 1.78 needed, due to removal of Bio.Alphabet
+  - biopython<1.78
+  - numpy
+  - pandas
+  - pickleshare
+  - argparse
+  - matplotlib
+  - seaborn
+  - more-itertools
+  - viennarna
+  - remurna
+  - rnasnp
+  - circos
+## local r-chie
+  - r-base=3.6
+  - r-rcolorbrewer
+  - r-optparse
