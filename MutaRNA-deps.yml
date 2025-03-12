@@ -17,7 +17,7 @@ dependencies:
 ###########################################
 #
 ## MutaRNA-plot.py
-  - python>=3.6
+  - python=3.6
   # biopython below 1.78 needed, due to removal of Bio.Alphabet
   - biopython<1.78
   - numpy
